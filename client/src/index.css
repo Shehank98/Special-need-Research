@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dyslexia-friendly global defaults. */
+@layer base {
+  html {
+    font-family: 'OpenDyslexic', 'Noto Sans Sinhala', 'Comic Sans MS', sans-serif;
+  }
+  body {
+    @apply bg-cream text-ink;
+    font-size: 1.2rem; /* minimum readable size */
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+    word-spacing: 0.1em;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Never justify or italicise body text — both hurt dyslexic readers. */
+  p,
+  li {
+    text-align: left;
+    font-style: normal;
+  }
+  /* Larger, easier focus rings for keyboard users. */
+  :focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3
+           font-semibold shadow-md transition active:scale-95
+           focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300;
+    min-height: 56px; /* large tap targets for small hands */
+  }
+  .btn-primary {
+    @apply btn bg-blue-500 text-white hover:bg-blue-600;
+  }
+  .btn-soft {
+    @apply btn bg-pastel-yellow text-ink hover:brightness-95;
+  }
+  .card {
+    @apply rounded-3xl bg-white/70 p-6 shadow-md backdrop-blur;
+  }
+}
+
+/* Confetti animation for the badge unlock screen. */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+.confetti-piece {
+  position: fixed;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  animation: confetti-fall linear forwards;
+  z-index: 50;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-pop-in {
+  animation: pop-in 0.5s ease-out;
+}
