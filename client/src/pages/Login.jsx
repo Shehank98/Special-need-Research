@@ -5,29 +5,38 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import LanguageToggle from '../components/LanguageToggle.jsx';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
 
-  const [name, setName] = useState('');
   const [role, setRole] = useState('student');
+  const [mode, setMode] = useState('login'); // 'login' | 'register' (teachers)
+  const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const isTeacherRegister = role === 'teacher' && mode === 'register';
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     setBusy(true);
     try {
-      const u = await login({
-        name,
-        role,
-        language: lang,
-        grade: grade ? Number(grade) : null,
-        password: role === 'teacher' ? password : undefined,
-      });
+      let u;
+      if (isTeacherRegister) {
+        u = await register({ name, password, invite_code: inviteCode });
+      } else {
+        u = await login({
+          name,
+          role,
+          language: lang,
+          grade: grade ? Number(grade) : null,
+          password: role === 'teacher' ? password : undefined,
+        });
+      }
       navigate(u.role === 'teacher' ? '/teacher' : '/home');
     } catch (err) {
       setError(err.message);
@@ -54,7 +63,11 @@ export default function Login() {
               <button
                 key={r}
                 type="button"
-                onClick={() => setRole(r)}
+                onClick={() => {
+                  setRole(r);
+                  setMode('login');
+                  setError('');
+                }}
                 className={`btn ${role === r ? 'bg-pastel-green' : 'bg-white/70'} text-ink`}
                 aria-pressed={role === r}
               >
@@ -70,6 +83,7 @@ export default function Login() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
               className="w-full rounded-2xl border-2 border-pastel-blue bg-white/80 px-4 py-3 text-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
               placeholder={t('yourName')}
             />
@@ -92,14 +106,30 @@ export default function Login() {
 
           {role === 'teacher' && (
             <label className="block space-y-1">
-              <span className="font-semibold">{t('teacherPassword')}</span>
+              <span className="font-semibold">
+                {isTeacherRegister ? t('password') : t('teacherPassword')}
+              </span>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete={isTeacherRegister ? 'new-password' : 'current-password'}
                 className="w-full rounded-2xl border-2 border-pastel-blue bg-white/80 px-4 py-3 text-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
                 placeholder="••••••"
+              />
+            </label>
+          )}
+
+          {isTeacherRegister && (
+            <label className="block space-y-1">
+              <span className="font-semibold">{t('inviteCode')}</span>
+              <input
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                required
+                className="w-full rounded-2xl border-2 border-pastel-blue bg-white/80 px-4 py-3 text-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
+                placeholder={t('inviteCode')}
               />
             </label>
           )}
@@ -107,8 +137,21 @@ export default function Login() {
           {error && <p className="rounded-xl bg-pastel-pink px-4 py-2 font-semibold">{error}</p>}
 
           <button type="submit" disabled={busy} className="btn-primary w-full text-xl">
-            {busy ? t('loading') : t('login')}
+            {busy ? t('loading') : isTeacherRegister ? t('register') : t('login')}
           </button>
+
+          {role === 'teacher' && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'register' : 'login');
+                setError('');
+              }}
+              className="w-full text-center font-semibold text-blue-600 underline"
+            >
+              {mode === 'login' ? t('createAccount') : t('haveAccount')}
+            </button>
+          )}
         </form>
       </div>
     </div>

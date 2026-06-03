@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -22,9 +24,66 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: process.env.FRONTEND_URL || true, credentials: true }));
-app.use(express.json());
-app.use(morgan('dev'));
+// Behind Railway's proxy: trust it so rate-limit/IP detection works correctly.
+app.set('trust proxy', 1);
+
+// Security headers + a Content-Security-Policy that allows our CDNs
+// (OpenDyslexic + Google Fonts + OpenMoji images).
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        'default-src': ["'self'"],
+        'script-src': ["'self'"],
+        // React inline styles + injected font <style> tags need 'unsafe-inline'.
+        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdn.jsdelivr.net'],
+        'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', 'data:'],
+        'img-src': ["'self'", 'data:', 'https://openmoji.org'],
+        'connect-src': ["'self'"],
+        'object-src': ["'none'"],
+        'frame-ancestors': ["'self'"],
+        'upgrade-insecure-requests': process.env.NODE_ENV === 'production' ? [] : null,
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    // Allow images/fonts to be loaded from the CDNs above.
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+
+// Restrict CORS to the known frontend origin in production.
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    origin: process.env.NODE_ENV === 'production' && allowedOrigins.length ? allowedOrigins : true,
+    credentials: true,
+  })
+);
+
+// Cap request body size to limit abuse.
+app.use(express.json({ limit: '100kb' }));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// Global rate limit on the API; stricter limit on auth to slow brute force.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Please try again later.' },
+});
+app.use('/api/', apiLimiter);
+app.use('/api/auth/', authLimiter);
 
 // Health check (used by Railway healthcheckPath).
 app.get('/api/health', async (_req, res) => {

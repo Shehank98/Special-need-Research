@@ -20,6 +20,9 @@ router.post('/', requireAuth, async (req, res) => {
     if (!lesson_id) {
       return res.status(400).json({ error: 'lesson_id is required' });
     }
+    // Clamp numeric inputs to sane bounds.
+    const safeScore = Math.max(0, Math.min(100, Math.round(Number(score) || 0)));
+    const safeTime = Math.max(0, Math.min(86400, Math.round(Number(time_spent_seconds) || 0)));
     const studentId = req.user.role === 'student' ? req.user.id : req.body.student_id;
     if (!studentId) {
       return res.status(400).json({ error: 'student_id is required for teachers' });
@@ -42,7 +45,7 @@ router.post('/', requireAuth, async (req, res) => {
              attempts = attempts + 1,
              completed_at = CASE WHEN $3 THEN NOW() ELSE completed_at END
          WHERE id = $4 RETURNING *`,
-        [score, time_spent_seconds, completed, prev.id]
+        [safeScore, safeTime, completed, prev.id]
       );
       progressRow = result.rows[0];
     } else {
@@ -51,7 +54,7 @@ router.post('/', requireAuth, async (req, res) => {
            (student_id, lesson_id, score, time_spent_seconds, completed, attempts, completed_at)
          VALUES ($1, $2, $3, $4, $5, 1, CASE WHEN $5 THEN NOW() ELSE NULL END)
          RETURNING *`,
-        [studentId, lesson_id, score, time_spent_seconds, completed]
+        [studentId, lesson_id, safeScore, safeTime, completed]
       );
       progressRow = result.rows[0];
     }
@@ -74,8 +77,8 @@ router.post('/', requireAuth, async (req, res) => {
     let newBadges = [];
     if (completed) {
       newBadges = await evaluateBadges(studentId, {
-        score,
-        timeSpent: time_spent_seconds,
+        score: safeScore,
+        timeSpent: safeTime,
         usedHint: used_hint,
       });
     }
@@ -84,8 +87,8 @@ router.post('/', requireAuth, async (req, res) => {
     const current = await query('SELECT difficulty, type FROM lessons WHERE id = $1', [lesson_id]);
     const currentDifficulty = current.rows[0]?.difficulty ?? 1;
     let nextDifficulty = currentDifficulty;
-    if (score < 60) nextDifficulty = Math.max(1, currentDifficulty - 1);
-    else if (score > 85) nextDifficulty = Math.min(5, currentDifficulty + 1);
+    if (safeScore < 60) nextDifficulty = Math.max(1, currentDifficulty - 1);
+    else if (safeScore > 85) nextDifficulty = Math.min(5, currentDifficulty + 1);
 
     // Suggest a not-yet-completed lesson at the target difficulty.
     const nextLesson = await query(

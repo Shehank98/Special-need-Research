@@ -8,6 +8,7 @@ import ProgressBar from '../components/ProgressBar.jsx';
 import SpeakButton from '../components/SpeakButton.jsx';
 import Confetti from '../components/Confetti.jsx';
 import BadgeCard from '../components/BadgeCard.jsx';
+import Picture from '../components/Picture.jsx';
 
 export default function Quiz() {
   const { id } = useParams();
@@ -157,10 +158,10 @@ export default function Quiz() {
               <button
                 key={i}
                 onClick={() => answer(opt)}
-                className="btn flex-col gap-1 bg-white/70 py-6 text-6xl"
+                className="btn h-auto flex-col gap-2 bg-white/70 py-5"
                 aria-label={lang === 'si' ? opt.label_si : opt.label_en}
               >
-                <span aria-hidden="true">{opt.emoji || '🖼️'}</span>
+                <Picture emoji={opt.emoji} imageUrl={opt.image_url} alt={lang === 'si' ? opt.label_si : opt.label_en} size={80} />
                 <span className="text-base font-semibold">
                   {lang === 'si' ? opt.label_si : opt.label_en}
                 </span>

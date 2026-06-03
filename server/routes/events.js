@@ -11,8 +11,11 @@ const VALID_EVENTS = ['tts_used', 'hint_used', 'badge_earned', 'quiz_answered', 
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { event_type, metadata = {} } = req.body || {};
-    if (!event_type) {
-      return res.status(400).json({ error: 'event_type is required' });
+    if (!event_type || !VALID_EVENTS.includes(event_type)) {
+      return res.status(400).json({ error: `event_type must be one of: ${VALID_EVENTS.join(', ')}` });
+    }
+    if (typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return res.status(400).json({ error: 'metadata must be an object' });
     }
     // Students log for themselves; teachers may pass a student_id explicitly.
     const studentId =

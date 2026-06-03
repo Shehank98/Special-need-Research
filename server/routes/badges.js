@@ -31,6 +31,9 @@ router.post('/', requireAuth, async (req, res) => {
     if (!student_id || !badge_type) {
       return res.status(400).json({ error: 'student_id and badge_type are required' });
     }
+    if (!BADGE_DEFS[badge_type]) {
+      return res.status(400).json({ error: 'Unknown badge_type' });
+    }
     // Students may only award badges to themselves.
     if (req.user.role === 'student' && req.user.id !== student_id) {
       return res.status(403).json({ error: 'Forbidden' });

@@ -10,8 +10,16 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(20) NOT NULL CHECK (role IN ('teacher', 'student')),
   language VARCHAR(10) DEFAULT 'en', -- 'en' or 'si'
   grade INT,
+  password_hash TEXT, -- only set for teacher accounts
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Add password_hash if upgrading an existing database created before this column.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
+-- A teacher name must be unique so password login is unambiguous.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_name
+  ON users (LOWER(name)) WHERE role = 'teacher';
 
 -- Lessons / Content modules
 CREATE TABLE IF NOT EXISTS lessons (

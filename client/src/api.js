@@ -37,6 +37,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
 export const api = {
   login: (payload) => request('/api/auth/login', { method: 'POST', body: payload, auth: false }),
+  register: (payload) => request('/api/auth/register', { method: 'POST', body: payload, auth: false }),
   logout: () => request('/api/auth/logout', { method: 'POST' }),
   dashboard: (studentId) => request(`/api/students/${studentId}/dashboard`),
   lessons: (difficulty) =>

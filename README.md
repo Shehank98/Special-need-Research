@@ -13,7 +13,11 @@ lessons and quietly collects learning‑engagement and performance data for a
   justified text, or ALL CAPS.
 - **Text‑to‑Speech** on every sentence via the browser‑native Web Speech API
   (English + Sinhala).
-- **Lesson types**: reading, picture‑match, and picture‑answer quizzes.
+- **Real picture illustrations** via [OpenMoji](https://openmoji.org) (openly
+  licensed, CC BY‑SA), rendered as crisp SVGs with an automatic emoji fallback —
+  no asset hosting required.
+- **Lesson types**: reading, picture‑match, and picture‑answer quizzes
+  (15 bilingual lessons across difficulty levels 1–5 in the seed).
 - **Adaptive difficulty**: < 60% → drop a level, > 85% → climb a level.
 - **Gamification**: badges (First Lesson, 3‑Day Streak, Perfect Score, Speed Star,
   Helper) with a confetti unlock animation.
@@ -91,11 +95,18 @@ Open http://localhost:5173.
 - Student: any name (auto‑registers), e.g. `Nimal`.
 - Teacher: name `Ms. Perera`, password `teacher123` (or your `TEACHER_PASSWORD`).
 
+**Teacher accounts**
+Teacher passwords are hashed with bcrypt. New teachers create their own account
+from the login screen ("Create teacher account") using the **invite code**, which
+is the `TEACHER_PASSWORD` environment variable. The seeded `Ms. Perera` account
+uses that same value as its initial password.
+
 ## 🌐 API Routes
 
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/api/auth/login` | Student/teacher login |
+| POST | `/api/auth/register` | Create a teacher account (invite code) |
 | POST | `/api/auth/logout` | Records logout time |
 | GET | `/api/students/:id/dashboard` | Student dashboard data |
 | GET | `/api/lessons` | List lessons (`?difficulty=`) |
@@ -144,6 +155,17 @@ The teacher **CSV export** aggregates all of the above, one row per student.
    npm run db:setup
    npm run db:seed
    ```
+
+## 🔐 Production hardening
+
+- **helmet** security headers incl. a Content‑Security‑Policy scoped to the app's
+  CDNs (OpenDyslexic, Google Fonts, OpenMoji).
+- **Rate limiting**: 600 req / 15 min globally, 50 / 15 min on `/api/auth` to slow
+  brute‑force attempts.
+- **bcrypt** password hashing for teacher accounts (cost 12).
+- **Input validation** (express‑validator + bounds/whitelist checks) and a 100 kB
+  JSON body limit on all routes.
+- **CORS** locked to `FRONTEND_URL` in production; `trust proxy` set for Railway.
 
 ## 🔐 Notes on research ethics
 - Student login is name‑based for young children in a supervised setting; collect

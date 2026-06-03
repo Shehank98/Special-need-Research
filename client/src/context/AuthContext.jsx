@@ -20,12 +20,21 @@ export function AuthProvider({ children }) {
     setReady(true);
   }, []);
 
-  async function login(payload) {
-    const { token, user: u } = await api.login(payload);
+  function persist(token, u) {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(u));
     setUser(u);
     return u;
+  }
+
+  async function login(payload) {
+    const { token, user: u } = await api.login(payload);
+    return persist(token, u);
+  }
+
+  async function register(payload) {
+    const { token, user: u } = await api.register(payload);
+    return persist(token, u);
   }
 
   async function logout() {
@@ -40,7 +49,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, logout }}>
+    <AuthContext.Provider value={{ user, ready, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

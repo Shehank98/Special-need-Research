@@ -8,6 +8,7 @@ import ProgressBar from '../components/ProgressBar.jsx';
 import SpeakButton from '../components/SpeakButton.jsx';
 import Confetti from '../components/Confetti.jsx';
 import BadgeCard from '../components/BadgeCard.jsx';
+import Picture from '../components/Picture.jsx';
 
 // Handles both 'reading' and 'picture_match' lesson types.
 export default function LessonPlayer() {
@@ -95,7 +96,10 @@ export default function LessonPlayer() {
             </div>
           )}
           <ProgressBar value={step + 1} max={sentences.length} />
-          <div className="card space-y-5 text-center">
+          <div className="card flex flex-col items-center space-y-5 text-center">
+            {current?.emoji && (
+              <Picture emoji={current.emoji} alt={text} size={120} />
+            )}
             <p className="text-3xl leading-relaxed">{text}</p>
             <SpeakButton text={text} lang={lang} label={t('listen')} className="mx-auto" />
           </div>
@@ -176,12 +180,12 @@ export default function LessonPlayer() {
                 key={`p-${it.word_en}`}
                 onClick={() => handlePicTap(it)}
                 disabled={matched[it.word_en]}
-                className={`btn w-full text-5xl ${
+                className={`btn h-auto w-full py-4 ${
                   matched[it.word_en] ? 'bg-pastel-green opacity-60' : 'bg-white/70'
                 }`}
                 aria-label={lang === 'si' ? it.word_si : it.word_en}
               >
-                {it.emoji || '🖼️'}
+                <Picture emoji={it.emoji} imageUrl={it.image_url} alt={lang === 'si' ? it.word_si : it.word_en} size={72} />
               </button>
             ))}
           </div>
