@@ -85,6 +85,16 @@ npm run db:setup            # create tables from schema.sql
 npm run db:seed             # add sample lessons + demo users
 ```
 
+**Prefer pure SQL?** The same content is available as plain SQL files you can run
+with `psql` (no Node needed):
+```bash
+psql "$DATABASE_URL" -f server/db/schema.sql -f server/db/seed.sql
+```
+`server/db/seed.sql` is auto-generated from `server/db/lessons.data.js`
+(`npm run db:gen-sql`), so it always matches the app's content. The seeded
+teacher row has a `NULL` password until first login, where the invite code
+(`TEACHER_PASSWORD`) bootstraps a bcrypt hash.
+
 ### 5. Run both apps
 ```bash
 npm run dev                 # server on :3000, client on :5173 (Vite proxy)
