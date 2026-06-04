@@ -1,5 +1,27 @@
 // Tiny fetch wrapper that attaches the JWT and base URL.
-const BASE = import.meta.env.VITE_API_URL || '';
+//
+// BASE is empty for a single-service deploy (client + API on the same origin),
+// so calls use relative paths like "/api/...". A separate API host can be set
+// via VITE_API_URL at build time.
+function resolveBase() {
+  let configured = import.meta.env.VITE_API_URL || '';
+  if (configured && typeof window !== 'undefined') {
+    try {
+      const u = new URL(configured);
+      const apiIsLocal = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+      const pageIsLocal =
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Safety: a localhost API URL baked into a build that's served from a real
+      // domain is a misconfiguration — fall back to same-origin relative paths.
+      if (apiIsLocal && !pageIsLocal) configured = '';
+    } catch {
+      configured = '';
+    }
+  }
+  return configured;
+}
+
+const BASE = resolveBase();
 
 function getToken() {
   return localStorage.getItem('token');
