@@ -95,6 +95,11 @@ psql "$DATABASE_URL" -f server/db/schema.sql -f server/db/seed.sql
 teacher row has a `NULL` password until first login, where the invite code
 (`TEACHER_PASSWORD`) bootstraps a bcrypt hash.
 
+**Auto-migrate on boot (optional).** Set `RUN_MIGRATIONS=true` and the server
+applies the idempotent `schema.sql` on startup — creating tables and adding any
+new columns automatically, so a fresh or upgraded deploy needs no manual SQL.
+It never seeds data (that stays explicit). Failure is logged but non-fatal.
+
 ### 5. Run both apps
 ```bash
 npm run dev                 # server on :3000, client on :5173 (Vite proxy)

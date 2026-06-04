@@ -17,6 +17,7 @@ import badgeRoutes from './routes/badges.js';
 import teacherRoutes from './routes/teacher.js';
 import { requireAuth } from './middleware/auth.js';
 import { query } from './db/pool.js';
+import { runMigrations } from './db/migrate.js';
 
 dotenv.config();
 
@@ -167,6 +168,22 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
-});
+// Optional: run the idempotent schema on boot (RUN_MIGRATIONS=true), so a fresh
+// or upgraded deploy needs no manual SQL. Failure is logged but non-fatal so the
+// /api/health endpoint can still report a disconnected DB.
+async function start() {
+  if (process.env.RUN_MIGRATIONS === 'true') {
+    try {
+      console.log('⏳ RUN_MIGRATIONS=true — applying schema…');
+      await runMigrations();
+      console.log('✅ Database schema is up to date.');
+    } catch (err) {
+      console.error('❌ Auto-migration failed:', err.message);
+    }
+  }
+  app.listen(PORT, () => {
+    console.log(`🚀 Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
+  });
+}
+
+start();
