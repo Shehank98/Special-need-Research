@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api, getToken, BASE } from '../api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import Layout from '../components/Layout.jsx';
 
 export default function TeacherDashboard() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
 
@@ -38,9 +40,14 @@ export default function TeacherDashboard() {
       <div className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-bold">👩‍🏫 {t('teacherDashboard')}</h1>
-          <button onClick={downloadCsv} className="btn-primary">
-            ⬇️ {t('exportCsv')}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => navigate('/teacher/lessons')} className="btn-soft">
+              📚 {t('manageLessons')}
+            </button>
+            <button onClick={downloadCsv} className="btn-primary">
+              ⬇️ {t('exportCsv')}
+            </button>
+          </div>
         </div>
 
         <p className="text-base text-ink/70">

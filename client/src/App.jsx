@@ -7,6 +7,7 @@ import LessonPlayer from './pages/LessonPlayer.jsx';
 import Quiz from './pages/Quiz.jsx';
 import Badges from './pages/Badges.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
+import LessonManager from './pages/LessonManager.jsx';
 
 export default function App() {
   const { user, ready } = useAuth();
@@ -61,6 +62,14 @@ export default function App() {
         element={
           <ProtectedRoute role="teacher">
             <TeacherDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teacher/lessons"
+        element={
+          <ProtectedRoute role="teacher">
+            <LessonManager />
           </ProtectedRoute>
         }
       />
