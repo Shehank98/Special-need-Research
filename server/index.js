@@ -40,7 +40,8 @@ app.use(
         'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdn.jsdelivr.net'],
         'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', 'data:'],
         'img-src': ["'self'", 'data:', 'https://openmoji.org'],
-        'connect-src': ["'self'"],
+        // jsdelivr is allowed for the OpenDyslexic font's source map fetch.
+        'connect-src': ["'self'", 'https://cdn.jsdelivr.net'],
         'object-src': ["'none'"],
         'frame-ancestors': ["'self'"],
         'upgrade-insecure-requests': process.env.NODE_ENV === 'production' ? [] : null,
@@ -129,9 +130,33 @@ app.post('/api/auth/logout', requireAuth, async (req, res) => {
 // Serve the built React client in production (single-service deploy).
 const clientDist = path.join(__dirname, '..', 'client', 'dist');
 if (fs.existsSync(clientDist)) {
-  app.use(express.static(clientDist));
-  // SPA fallback for any non-API route.
-  app.get(/^\/(?!api).*/, (_req, res) => {
+  // Hashed build assets are content-addressed, so cache them aggressively.
+  app.use(
+    '/assets',
+    express.static(path.join(clientDist, 'assets'), {
+      immutable: true,
+      maxAge: '1y',
+      fallthrough: true, // missing asset -> 404 (handled below), never index.html
+    })
+  );
+
+  // Other static files (favicon, etc.). index.html must NOT be cached, so the
+  // browser always picks up the latest asset hashes after a redeploy.
+  app.use(
+    express.static(clientDist, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        }
+      },
+    })
+  );
+
+  // A missing file with an extension (e.g. an old .css/.js hash) should 404 —
+  // never fall back to index.html, which would break MIME-type checking.
+  app.get(/^\/(?!api).*/, (req, res, next) => {
+    if (path.extname(req.path)) return next(); // -> default 404
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 }
