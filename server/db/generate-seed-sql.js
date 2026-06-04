@@ -32,11 +32,12 @@ BEGIN;
 DELETE FROM lessons;
 
 -- ---- Lessons (${lessons.length}) ----
-INSERT INTO lessons (title_en, title_si, type, difficulty, content) VALUES
+INSERT INTO lessons (title_en, title_si, type, category, difficulty, content) VALUES
 `;
 
 const lessonRows = lessons.map(
-  (l) => `  (${q(l.title_en)}, ${q(l.title_si)}, ${q(l.type)}, ${l.difficulty}, ${j(l.content)})`
+  (l) =>
+    `  (${q(l.title_en)}, ${q(l.title_si)}, ${q(l.type)}, ${q(l.category || 'dyslexia')}, ${l.difficulty}, ${j(l.content)})`
 );
 out += lessonRows.join(',\n') + ';\n\n';
 

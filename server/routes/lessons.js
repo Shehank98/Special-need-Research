@@ -4,11 +4,12 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-const LESSON_TYPES = ['reading', 'quiz', 'picture_match'];
+const LESSON_TYPES = ['reading', 'quiz', 'picture_match', 'numbers', 'spelling'];
+const CATEGORIES = ['dyslexia', 'dyscalculia', 'dysorthographia'];
 
 // Validates and normalises a lesson payload. Returns { error } or { value }.
 function validateLesson(body) {
-  const { title_en, title_si, type, difficulty, content } = body || {};
+  const { title_en, title_si, type, category, difficulty, content } = body || {};
 
   if (!title_en || typeof title_en !== 'string' || title_en.trim().length === 0) {
     return { error: 'title_en is required' };
@@ -58,6 +59,41 @@ function validateLesson(body) {
         return { error: 'each quiz question needs at least one correct option' };
       }
     }
+  } else if (type === 'numbers') {
+    if (!Array.isArray(content.questions) || content.questions.length === 0) {
+      return { error: 'numbers content needs a non-empty questions array' };
+    }
+    for (const q of content.questions) {
+      if (!Array.isArray(q.groups) || q.groups.length === 0) {
+        return { error: 'each numbers question needs at least one group of objects' };
+      }
+      if (typeof q.answer !== 'number') {
+        return { error: 'each numbers question needs a numeric answer' };
+      }
+      if (!Array.isArray(q.options) || q.options.length < 2) {
+        return { error: 'each numbers question needs at least 2 number options' };
+      }
+      if (!q.options.includes(q.answer)) {
+        return { error: 'the answer must be one of the number options' };
+      }
+    }
+  } else if (type === 'spelling') {
+    if (!Array.isArray(content.items) || content.items.length === 0) {
+      return { error: 'spelling content needs a non-empty items array' };
+    }
+    for (const it of content.items) {
+      if (!it.word_en || it.word_en.trim().length < 2) {
+        return { error: 'each spelling item needs an English word (2+ letters)' };
+      }
+    }
+  }
+
+  // Category: default by type if not provided/valid.
+  let cat = CATEGORIES.includes(category) ? category : null;
+  if (!cat) {
+    if (type === 'numbers') cat = 'dyscalculia';
+    else if (type === 'spelling') cat = 'dysorthographia';
+    else cat = 'dyslexia';
   }
 
   // Ensure content carries its type for the client renderer.
@@ -68,6 +104,7 @@ function validateLesson(body) {
       title_en: title_en.trim(),
       title_si: (title_si || '').trim(),
       type,
+      category: cat,
       difficulty: diff,
       content: normalisedContent,
     },
@@ -115,9 +152,16 @@ router.post('/', requireAuth, requireRole('teacher'), async (req, res) => {
   if (error) return res.status(400).json({ error });
   try {
     const result = await query(
-      `INSERT INTO lessons (title_en, title_si, type, difficulty, content)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [value.title_en, value.title_si, value.type, value.difficulty, JSON.stringify(value.content)]
+      `INSERT INTO lessons (title_en, title_si, type, category, difficulty, content)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [
+        value.title_en,
+        value.title_si,
+        value.type,
+        value.category,
+        value.difficulty,
+        JSON.stringify(value.content),
+      ]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -133,12 +177,13 @@ router.put('/:id', requireAuth, requireRole('teacher'), async (req, res) => {
   try {
     const result = await query(
       `UPDATE lessons
-       SET title_en = $1, title_si = $2, type = $3, difficulty = $4, content = $5
-       WHERE id = $6 RETURNING *`,
+       SET title_en = $1, title_si = $2, type = $3, category = $4, difficulty = $5, content = $6
+       WHERE id = $7 RETURNING *`,
       [
         value.title_en,
         value.title_si,
         value.type,
+        value.category,
         value.difficulty,
         JSON.stringify(value.content),
         req.params.id,

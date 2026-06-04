@@ -43,7 +43,8 @@ async function buildReport() {
       COALESCE(e.quiz_answered, 0) AS quiz_answered,
       COALESCE(b.badge_count, 0) AS badge_count,
       COALESCE(s.login_days, 0) AS login_days,
-      COALESCE(s.total_session_minutes, 0) AS total_session_minutes
+      COALESCE(s.total_session_minutes, 0) AS total_session_minutes,
+      s.last_session_date
     FROM users u
     LEFT JOIN (
       SELECT student_id,
@@ -65,13 +66,73 @@ async function buildReport() {
     LEFT JOIN (
       SELECT student_id,
              COUNT(DISTINCT session_date) AS login_days,
+             MAX(session_date) AS last_session_date,
              ROUND(SUM(EXTRACT(EPOCH FROM (COALESCE(logout_time, login_time) - login_time))) / 60) AS total_session_minutes
       FROM study_sessions GROUP BY student_id
     ) s ON s.student_id = u.id
     WHERE u.role = 'student'
     ORDER BY u.name
   `);
-  return result.rows;
+  const rows = result.rows;
+
+  // Per-category breakdown (one row per student per disability area).
+  const catRes = await query(`
+    SELECT p.student_id, l.category,
+           COUNT(*) FILTER (WHERE p.completed) AS done,
+           COALESCE(ROUND(AVG(p.score) FILTER (WHERE p.completed)), 0) AS avg_score
+    FROM progress p
+    JOIN lessons l ON l.id = p.lesson_id
+    GROUP BY p.student_id, l.category
+  `);
+
+  const CATEGORIES = ['dyslexia', 'dyscalculia', 'dysorthographia'];
+  const byStudent = {};
+  for (const r of catRes.rows) {
+    byStudent[r.student_id] = byStudent[r.student_id] || {};
+    byStudent[r.student_id][r.category] = {
+      done: Number(r.done),
+      avg_score: Number(r.avg_score),
+    };
+  }
+
+  // Attach category stats + compute fast-action attention flags per student.
+  for (const row of rows) {
+    const cats = {};
+    for (const c of CATEGORIES) {
+      cats[c] = byStudent[row.student_id]?.[c] || { done: 0, avg_score: 0 };
+    }
+    row.categories = cats;
+
+    const flags = [];
+    // Struggling: completed work in an area but averaging below 60%.
+    for (const c of CATEGORIES) {
+      if (cats[c].done >= 1 && cats[c].avg_score < 60) {
+        flags.push({ type: 'struggling', area: c, value: cats[c].avg_score });
+      }
+    }
+    // Not started at all.
+    if (Number(row.lessons_completed) === 0) {
+      flags.push({ type: 'not_started' });
+    }
+    // Over-relying on hints (used a hint on most answered questions).
+    const answered = Number(row.quiz_answered);
+    const hints = Number(row.hint_used);
+    if (answered >= 3 && hints >= answered) {
+      flags.push({ type: 'hint_reliant' });
+    }
+    // Inactive: no login in 3+ days (or never).
+    let daysInactive = null;
+    if (row.last_session_date) {
+      const last = new Date(row.last_session_date);
+      daysInactive = Math.floor((Date.now() - last.getTime()) / 86400000);
+      if (daysInactive >= 3) flags.push({ type: 'inactive', days: daysInactive });
+    }
+    row.days_inactive = daysInactive;
+    row.flags = flags;
+    row.needs_attention = flags.length > 0;
+  }
+
+  return rows;
 }
 
 // GET /api/teacher/report -> aggregated research report (JSON, or CSV if ?format=csv)
@@ -94,14 +155,33 @@ router.get('/report', async (req, res) => {
         'badge_count',
         'login_days',
         'total_session_minutes',
+        'days_inactive',
+        'dyslexia_done',
+        'dyslexia_avg',
+        'dyscalculia_done',
+        'dyscalculia_avg',
+        'dysorthographia_done',
+        'dysorthographia_avg',
+        'needs_attention',
+        'flags',
       ];
       const escape = (v) => {
         const s = v === null || v === undefined ? '' : String(v);
         return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
       };
+      const flatten = (r) => ({
+        ...r,
+        dyslexia_done: r.categories.dyslexia.done,
+        dyslexia_avg: r.categories.dyslexia.avg_score,
+        dyscalculia_done: r.categories.dyscalculia.done,
+        dyscalculia_avg: r.categories.dyscalculia.avg_score,
+        dysorthographia_done: r.categories.dysorthographia.done,
+        dysorthographia_avg: r.categories.dysorthographia.avg_score,
+        flags: r.flags.map((f) => (f.area ? `${f.type}:${f.area}` : f.type)).join('; '),
+      });
       const csv = [
         headers.join(','),
-        ...rows.map((r) => headers.map((h) => escape(r[h])).join(',')),
+        ...rows.map(flatten).map((r) => headers.map((h) => escape(r[h])).join(',')),
       ].join('\n');
 
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');

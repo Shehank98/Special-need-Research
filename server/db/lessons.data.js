@@ -6,10 +6,12 @@
 // image fails to load — so no asset hosting is required.
 
 // Small helpers to keep the lesson data terse and consistent.
+// Reading / picture-match / quiz target dyslexia (reading & word recognition).
 const pm = (title_en, title_si, difficulty, instructions, items) => ({
   title_en,
   title_si,
   type: 'picture_match',
+  category: 'dyslexia',
   difficulty,
   content: {
     type: 'picture_match',
@@ -23,6 +25,7 @@ const reading = (title_en, title_si, difficulty, sentences) => ({
   title_en,
   title_si,
   type: 'reading',
+  category: 'dyslexia',
   difficulty,
   content: {
     type: 'reading',
@@ -36,6 +39,7 @@ const quiz = (title_en, title_si, difficulty, instructions, questions) => ({
   title_en,
   title_si,
   type: 'quiz',
+  category: 'dyslexia',
   difficulty,
   content: {
     type: 'quiz',
@@ -44,6 +48,50 @@ const quiz = (title_en, title_si, difficulty, instructions, questions) => ({
     questions,
   },
 });
+
+// Numbers target dyscalculia (number sense, counting, simple arithmetic).
+// Each question shows one or more groups of objects and number-tile answers.
+const numbers = (title_en, title_si, difficulty, instructions, questions) => ({
+  title_en,
+  title_si,
+  type: 'numbers',
+  category: 'dyscalculia',
+  difficulty,
+  content: {
+    type: 'numbers',
+    instructions_en: instructions.en,
+    instructions_si: instructions.si,
+    questions,
+  },
+});
+
+// Spelling targets dysorthographia (build the word from scrambled letter tiles).
+const spelling = (title_en, title_si, difficulty, instructions, items) => ({
+  title_en,
+  title_si,
+  type: 'spelling',
+  category: 'dysorthographia',
+  difficulty,
+  content: {
+    type: 'spelling',
+    instructions_en: instructions.en,
+    instructions_si: instructions.si,
+    items,
+  },
+});
+
+const COUNT = {
+  en: 'Count the pictures and tap the right number.',
+  si: 'පින්තූර ගණන් කර නිවැරදි අංකය තට්ටු කරන්න.',
+};
+const ADD = {
+  en: 'Add the pictures together and tap the answer.',
+  si: 'පින්තූර එකතු කර පිළිතුර තට්ටු කරන්න.',
+};
+const SPELL = {
+  en: 'Look at the picture. Tap the letters in order to spell the word.',
+  si: 'පින්තූරය බලන්න. වචනය අකුරු කිරීමට අකුරු පිළිවෙළට තට්ටු කරන්න.',
+};
 
 const MATCH = {
   en: 'Match the word to the picture',
@@ -243,6 +291,46 @@ export const lessons = [
       hint_en: 'It is a pet that barks.',
       hint_si: 'එය බුරන සුරතලෙකි.',
     },
+  ]),
+
+  // =====================================================================
+  // DYSCALCULIA — numbers, counting and simple arithmetic
+  // =====================================================================
+  numbers('Count the Animals', 'සතුන් ගණන් කරන්න', 1, COUNT, [
+    { prompt_en: 'How many cats?', prompt_si: 'පූසන් කී දෙනෙක්ද?', groups: [{ emoji: '🐱', count: 2 }], answer: 2, options: [1, 2, 3], hint_en: 'Touch each cat as you count.', hint_si: 'ගණන් කරන විට එක් එක් පූසා ස්පර්ශ කරන්න.' },
+    { prompt_en: 'How many ducks?', prompt_si: 'තාරාවන් කී දෙනෙක්ද?', groups: [{ emoji: '🦆', count: 3 }], answer: 3, options: [2, 3, 4], hint_en: 'Count slowly: one, two, three.', hint_si: 'සෙමින් ගණන් කරන්න: එක, දෙක, තුන.' },
+    { prompt_en: 'How many fish?', prompt_si: 'මාළුන් කී දෙනෙක්ද?', groups: [{ emoji: '🐟', count: 4 }], answer: 4, options: [3, 4, 5], hint_en: 'Point to each fish.', hint_si: 'එක් එක් මාළුවා පෙන්වන්න.' },
+  ]),
+  numbers('Count the Fruit', 'පලතුරු ගණන් කරන්න', 2, COUNT, [
+    { prompt_en: 'How many apples?', prompt_si: 'ඇපල් කීයද?', groups: [{ emoji: '🍎', count: 5 }], answer: 5, options: [4, 5, 6], hint_en: 'Count each apple once.', hint_si: 'එක් එක් ඇපල් එක් වරක් ගණන් කරන්න.' },
+    { prompt_en: 'How many bananas?', prompt_si: 'කෙසෙල් කීයද?', groups: [{ emoji: '🍌', count: 6 }], answer: 6, options: [5, 6, 7], hint_en: 'Five and one more.', hint_si: 'පහයි තවත් එකයි.' },
+  ]),
+  numbers('Add the Fruit', 'පලතුරු එකතු කරන්න', 3, ADD, [
+    { prompt_en: 'How many in all?', prompt_si: 'මුළු ගණන කීයද?', groups: [{ emoji: '🍎', count: 2 }, { emoji: '🍎', count: 1 }], operator: '+', answer: 3, options: [2, 3, 4], hint_en: 'Two and one more is three.', hint_si: 'දෙකයි එකයි තුනයි.' },
+    { prompt_en: 'How many in all?', prompt_si: 'මුළු ගණන කීයද?', groups: [{ emoji: '🍌', count: 3 }, { emoji: '🍌', count: 2 }], operator: '+', answer: 5, options: [4, 5, 6], hint_en: 'Count all the bananas together.', hint_si: 'සියලු කෙසෙල් එකට ගණන් කරන්න.' },
+  ]),
+  numbers('Adding Stars', 'තරු එකතු කිරීම', 4, ADD, [
+    { prompt_en: 'Add the stars.', prompt_si: 'තරු එකතු කරන්න.', groups: [{ emoji: '⭐', count: 4 }, { emoji: '⭐', count: 3 }], operator: '+', answer: 7, options: [6, 7, 8], hint_en: 'Four plus three.', hint_si: 'හතරයි තුනයි.' },
+    { prompt_en: 'Add the stars.', prompt_si: 'තරු එකතු කරන්න.', groups: [{ emoji: '⭐', count: 5 }, { emoji: '⭐', count: 4 }], operator: '+', answer: 9, options: [8, 9, 10], hint_en: 'Five plus four.', hint_si: 'පහයි හතරයි.' },
+  ]),
+
+  // =====================================================================
+  // DYSORTHOGRAPHIA — spelling by arranging letter tiles
+  // =====================================================================
+  spelling('Spell the Animal', 'සතාගේ නම අකුරු කරන්න', 1, SPELL, [
+    { word_en: 'cat', word_si: 'පූසා', emoji: '🐱' },
+    { word_en: 'dog', word_si: 'බල්ලා', emoji: '🐶' },
+    { word_en: 'pig', word_si: 'ඌරා', emoji: '🐷' },
+  ]),
+  spelling('Spell the Fruit', 'පලතුරේ නම අකුරු කරන්න', 2, SPELL, [
+    { word_en: 'apple', word_si: 'ඇපල්', emoji: '🍎' },
+    { word_en: 'mango', word_si: 'අඹ', emoji: '🥭' },
+    { word_en: 'lemon', word_si: 'දෙහි', emoji: '🍋' },
+  ]),
+  spelling('Spell Things at Home', 'ගෙදර දේවල් අකුරු කරන්න', 3, SPELL, [
+    { word_en: 'book', word_si: 'පොත', emoji: '📖' },
+    { word_en: 'clock', word_si: 'ඔරලෝසුව', emoji: '🕐' },
+    { word_en: 'chair', word_si: 'පුටුව', emoji: '🪑' },
   ]),
 ];
 

@@ -4,11 +4,23 @@ import { api } from '../api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import Layout from '../components/Layout.jsx';
 import Picture from '../components/Picture.jsx';
+import { CATEGORY_META } from '../lib/lessons.js';
 
 const TYPE_LABELS = {
   picture_match: { en: 'Picture match', si: 'පින්තූර ගැලපීම', emoji: '🖼️' },
   reading: { en: 'Reading', si: 'කියවීම', emoji: '📖' },
   quiz: { en: 'Quiz', si: 'ප්‍රශ්නාවලිය', emoji: '❓' },
+  numbers: { en: 'Numbers / counting', si: 'අංක / ගණන් කිරීම', emoji: '🔢' },
+  spelling: { en: 'Spelling', si: 'අක්ෂර වින්‍යාසය', emoji: '✏️' },
+};
+
+// Default disability category for each lesson type.
+const DEFAULT_CATEGORY = {
+  picture_match: 'dyslexia',
+  reading: 'dyslexia',
+  quiz: 'dyslexia',
+  numbers: 'dyscalculia',
+  spelling: 'dysorthographia',
 };
 
 // Blank templates so a new lesson of each type starts valid-ish.
@@ -22,16 +34,37 @@ const blankQuestion = () => ({
   hint_si: '',
   options: [blankOption(true), blankOption(false)],
 });
+const blankGroup = () => ({ emoji: '', count: 1 });
+const blankNumberQ = () => ({
+  prompt_en: '',
+  prompt_si: '',
+  hint_en: '',
+  hint_si: '',
+  groups: [blankGroup()],
+  operator: '+',
+  answer: 1,
+  options: [1, 2, 3],
+});
+const blankSpellItem = () => ({ word_en: '', word_si: '', emoji: '' });
 
 function blankContent(type) {
   const base = { instructions_en: '', instructions_si: '' };
   if (type === 'picture_match') return { ...base, items: [blankItem(), blankItem()] };
   if (type === 'reading') return { ...base, sentences: [blankSentence()] };
+  if (type === 'numbers') return { ...base, questions: [blankNumberQ()] };
+  if (type === 'spelling') return { ...base, items: [blankSpellItem()] };
   return { ...base, questions: [blankQuestion()] };
 }
 
 function blankDraft() {
-  return { title_en: '', title_si: '', type: 'picture_match', difficulty: 1, content: blankContent('picture_match') };
+  return {
+    title_en: '',
+    title_si: '',
+    type: 'picture_match',
+    category: 'dyslexia',
+    difficulty: 1,
+    content: blankContent('picture_match'),
+  };
 }
 
 // Small labelled text input.
@@ -84,6 +117,7 @@ export default function LessonManager() {
       title_en: lesson.title_en || '',
       title_si: lesson.title_si || '',
       type: lesson.type,
+      category: lesson.category || DEFAULT_CATEGORY[lesson.type] || 'dyslexia',
       difficulty: lesson.difficulty || 1,
       content: { instructions_en: '', instructions_si: '', ...(lesson.content || {}) },
     });
@@ -105,7 +139,7 @@ export default function LessonManager() {
     setDraft((d) => ({ ...d, content: { ...d.content, [key]: val } }));
 
   function changeType(type) {
-    setDraft((d) => ({ ...d, type, content: blankContent(type) }));
+    setDraft((d) => ({ ...d, type, category: DEFAULT_CATEGORY[type] || d.category, content: blankContent(type) }));
   }
 
   async function save() {
@@ -116,6 +150,7 @@ export default function LessonManager() {
         title_en: draft.title_en,
         title_si: draft.title_si,
         type: draft.type,
+        category: draft.category,
         difficulty: Number(draft.difficulty),
         content: draft.content,
       };
@@ -166,7 +201,7 @@ export default function LessonManager() {
                       {lang === 'si' ? l.title_si || l.title_en : l.title_en}
                     </p>
                     <p className="text-sm text-ink/70">
-                      {TYPE_LABELS[l.type]?.emoji} {TYPE_LABELS[l.type]?.[lang] || l.type} · {t('difficulty')} {l.difficulty}
+                      {CATEGORY_META[l.category]?.emoji} {CATEGORY_META[l.category]?.[lang] || l.category} · {TYPE_LABELS[l.type]?.[lang] || l.type} · {t('difficulty')} {l.difficulty}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
@@ -223,6 +258,18 @@ export default function LessonManager() {
               ))}
             </select>
           </label>
+          <label className="block space-y-1">
+            <span className="text-base font-semibold">{t('category')}</span>
+            <select
+              value={draft.category}
+              onChange={(e) => setField('category', e.target.value)}
+              className="w-full rounded-xl border-2 border-pastel-blue bg-white/80 px-3 py-2 text-base"
+            >
+              {Object.entries(CATEGORY_META).map(([cat, meta]) => (
+                <option key={cat} value={cat}>{meta.emoji} {meta[lang] || meta.en}</option>
+              ))}
+            </select>
+          </label>
           <Field label={t('instructionsEn')} value={draft.content.instructions_en} onChange={(v) => setContentField('instructions_en', v)} />
           <Field label={t('instructionsSi')} value={draft.content.instructions_si} onChange={(v) => setContentField('instructions_si', v)} />
         </div>
@@ -233,6 +280,8 @@ export default function LessonManager() {
         )}
         {draft.type === 'reading' && <ReadingEditor draft={draft} setDraft={setDraft} t={t} />}
         {draft.type === 'quiz' && <QuizEditor draft={draft} setDraft={setDraft} t={t} />}
+        {draft.type === 'numbers' && <NumbersEditor draft={draft} setDraft={setDraft} t={t} />}
+        {draft.type === 'spelling' && <SpellingEditor draft={draft} setDraft={setDraft} t={t} />}
 
         {/* Actions */}
         <div className="flex gap-3">
@@ -394,6 +443,95 @@ function QuizEditor({ draft, setDraft, t }) {
         </div>
       ))}
       <button onClick={addQ} className="btn-primary w-full">➕ {t('addQuestion')}</button>
+    </div>
+  );
+}
+
+// ---- numbers (counting / addition) editor ----
+function NumbersEditor({ draft, setDraft, t }) {
+  const questions = draft.content.questions || [];
+
+  const setQ = (qi, mutate) =>
+    setDraft((d) => ({
+      ...d,
+      content: { ...d.content, questions: d.content.questions.map((q, i) => (i === qi ? mutate(q) : q)) },
+    }));
+  const addQ = () => setDraft((d) => ({ ...d, content: { ...d.content, questions: [...d.content.questions, blankNumberQ()] } }));
+  const removeQ = (qi) => setDraft((d) => ({ ...d, content: { ...d.content, questions: d.content.questions.filter((_, i) => i !== qi) } }));
+
+  return (
+    <div className="space-y-4">
+      {questions.map((q, qi) => (
+        <div key={qi} className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold">{t('question')} {qi + 1}</h3>
+            <button onClick={() => removeQ(qi)} className="rounded-full bg-pastel-pink px-3 py-1 font-semibold">🗑️</button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t('promptEn')} value={q.prompt_en} onChange={(v) => setQ(qi, (x) => ({ ...x, prompt_en: v }))} />
+            <Field label={t('promptSi')} value={q.prompt_si} onChange={(v) => setQ(qi, (x) => ({ ...x, prompt_si: v }))} />
+          </div>
+
+          {/* Object groups */}
+          <div className="space-y-2">
+            {(q.groups || []).map((g, gi) => (
+              <div key={gi} className="grid items-end gap-2 rounded-xl bg-white/50 p-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+                <Field label={t('emoji')} value={g.emoji} onChange={(v) => setQ(qi, (x) => ({ ...x, groups: x.groups.map((gg, j) => (j === gi ? { ...gg, emoji: v } : gg)) }))} />
+                <Field label={t('count')} type="number" min="1" value={g.count} onChange={(v) => setQ(qi, (x) => ({ ...x, groups: x.groups.map((gg, j) => (j === gi ? { ...gg, count: Number(v) || 1 } : gg)) }))} />
+                {g.emoji && <Picture emoji={g.emoji} size={40} />}
+                <button onClick={() => setQ(qi, (x) => ({ ...x, groups: x.groups.filter((_, j) => j !== gi) }))} className="rounded-full bg-pastel-pink px-3 py-2 font-semibold">✕</button>
+              </div>
+            ))}
+            <button onClick={() => setQ(qi, (x) => ({ ...x, groups: [...x.groups, blankGroup()] }))} className="btn-soft w-full">➕ {t('addGroup')}</button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label={t('operator')} value={q.operator} onChange={(v) => setQ(qi, (x) => ({ ...x, operator: v || '+' }))} />
+            <Field label={t('answer')} type="number" value={q.answer} onChange={(v) => setQ(qi, (x) => ({ ...x, answer: Number(v) || 0 }))} />
+            <Field
+              label={t('numberOptions')}
+              value={(q.options || []).join(', ')}
+              onChange={(v) =>
+                setQ(qi, (x) => ({ ...x, options: v.split(',').map((s) => Number(s.trim())).filter((n) => !Number.isNaN(n)) }))
+              }
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t('hintEn')} value={q.hint_en} onChange={(v) => setQ(qi, (x) => ({ ...x, hint_en: v }))} />
+            <Field label={t('hintSi')} value={q.hint_si} onChange={(v) => setQ(qi, (x) => ({ ...x, hint_si: v }))} />
+          </div>
+        </div>
+      ))}
+      <button onClick={addQ} className="btn-primary w-full">➕ {t('addQuestion')}</button>
+    </div>
+  );
+}
+
+// ---- spelling words editor ----
+function SpellingEditor({ draft, setDraft, t }) {
+  const items = draft.content.items || [];
+  const update = (i, key, val) =>
+    setDraft((d) => ({
+      ...d,
+      content: { ...d.content, items: d.content.items.map((it, idx) => (idx === i ? { ...it, [key]: val } : it)) },
+    }));
+  const add = () => setDraft((d) => ({ ...d, content: { ...d.content, items: [...d.content.items, blankSpellItem()] } }));
+  const remove = (i) => setDraft((d) => ({ ...d, content: { ...d.content, items: d.content.items.filter((_, idx) => idx !== i) } }));
+
+  return (
+    <div className="card space-y-3">
+      {items.map((it, i) => (
+        <div key={i} className="grid items-end gap-2 rounded-xl bg-white/50 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+          <Field label={t('spellingWord')} value={it.word_en} onChange={(v) => update(i, 'word_en', v)} />
+          <Field label={t('wordSi')} value={it.word_si} onChange={(v) => update(i, 'word_si', v)} />
+          <div className="flex items-end gap-2">
+            <Field label={t('emoji')} value={it.emoji} onChange={(v) => update(i, 'emoji', v)} />
+            {it.emoji && <Picture emoji={it.emoji} size={40} />}
+          </div>
+          <button onClick={() => remove(i)} className="rounded-full bg-pastel-pink px-3 py-2 font-semibold">✕</button>
+        </div>
+      ))}
+      <button onClick={add} className="btn-soft w-full">➕ {t('addItem')}</button>
     </div>
   );
 }

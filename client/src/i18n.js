@@ -82,6 +82,33 @@ export const STRINGS = {
   backToDashboard: { en: 'Back to Dashboard', si: 'පුවරුවට ආපසු' },
   noLessons: { en: 'No lessons yet. Create your first one!', si: 'තවම පාඩම් නැත. ඔබේ පළමු එක සාදන්න!' },
   lessonSaved: { en: 'Lesson saved!', si: 'පාඩම සුරැකිණි!' },
+  // Student dashboard skill picker
+  chooseSkill: { en: 'Choose what to practise', si: 'පුහුණු කරන්නේ කුමක්දැයි තෝරන්න' },
+  play: { en: 'Play', si: 'සෙල්ලම් කරන්න' },
+  allDone: { en: 'All done!', si: 'සියල්ල අවසන්!' },
+  // Categories
+  category: { en: 'Skill area', si: 'කුසලතා ක්ෂේත්‍රය' },
+  // Teacher analytics
+  overview: { en: 'Overview', si: 'සාරාංශය' },
+  activeStudents: { en: 'Active students', si: 'ක්‍රියාකාරී සිසුන්' },
+  avgScoreAll: { en: 'Average score', si: 'සාමාන්‍ය ලකුණු' },
+  needHelp: { en: 'Need attention', si: 'අවධානය අවශ්‍යයි' },
+  needsAttention: { en: 'Needs attention', si: 'අවධානය අවශ්‍යයි' },
+  allGood: { en: 'On track', si: 'හරි මගේ' },
+  flagStruggling: { en: 'Low score', si: 'අඩු ලකුණු' },
+  flagNotStarted: { en: 'Not started', si: 'ආරම්භ කර නැත' },
+  flagHintReliant: { en: 'Relies on hints', si: 'ඉඟි මත රඳා පවතී' },
+  flagInactive: { en: 'Inactive', si: 'අක්‍රියයි' },
+  reading: { en: 'Reading', si: 'කියවීම' },
+  numbersSkill: { en: 'Numbers', si: 'ගණිතය' },
+  spellingSkill: { en: 'Spelling', si: 'අක්ෂර' },
+  // Number/spelling editors
+  count: { en: 'How many', si: 'කීයද' },
+  answer: { en: 'Answer (number)', si: 'පිළිතුර (අංකය)' },
+  numberOptions: { en: 'Number choices (comma separated)', si: 'අංක තේරීම් (කොමාවෙන් වෙන්)' },
+  operator: { en: 'Operator (+ or −)', si: 'ක්‍රියාකරු (+ හෝ −)' },
+  addGroup: { en: 'Add object group', si: 'වස්තු කණ්ඩායමක් එක් කරන්න' },
+  spellingWord: { en: 'Word to spell (English)', si: 'අකුරු කළ යුතු වචනය (ඉංග්‍රීසි)' },
 };
 
 export function t(key, lang) {

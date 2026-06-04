@@ -26,11 +26,16 @@ CREATE TABLE IF NOT EXISTS lessons (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title_en TEXT,
   title_si TEXT,
-  type VARCHAR(30), -- 'reading', 'quiz', 'picture_match'
+  type VARCHAR(30), -- 'reading', 'quiz', 'picture_match', 'numbers', 'spelling'
+  category VARCHAR(20) DEFAULT 'dyslexia', -- 'dyslexia', 'dyscalculia', 'dysorthographia'
   difficulty INT CHECK (difficulty BETWEEN 1 AND 5),
   content JSONB, -- flexible content structure
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Add category if upgrading a database created before this column.
+ALTER TABLE lessons ADD COLUMN IF NOT EXISTS category VARCHAR(20) DEFAULT 'dyslexia';
+CREATE INDEX IF NOT EXISTS idx_lessons_category ON lessons(category);
 
 -- Student progress per lesson
 CREATE TABLE IF NOT EXISTS progress (

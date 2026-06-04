@@ -22,9 +22,9 @@ async function seed() {
     await client.query('DELETE FROM lessons');
     for (const l of lessons) {
       await client.query(
-        `INSERT INTO lessons (title_en, title_si, type, difficulty, content)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [l.title_en, l.title_si, l.type, l.difficulty, JSON.stringify(l.content)]
+        `INSERT INTO lessons (title_en, title_si, type, category, difficulty, content)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [l.title_en, l.title_si, l.type, l.category || 'dyslexia', l.difficulty, JSON.stringify(l.content)]
       );
     }
 

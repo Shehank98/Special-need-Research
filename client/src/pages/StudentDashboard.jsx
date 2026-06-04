@@ -8,6 +8,7 @@ import Layout from '../components/Layout.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 import BadgeCard from '../components/BadgeCard.jsx';
 import SpeakButton from '../components/SpeakButton.jsx';
+import { lessonPath, CATEGORY_META } from '../lib/lessons.js';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -15,6 +16,8 @@ export default function StudentDashboard() {
   const { speak } = useTTS();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [lessons, setLessons] = useState([]);
+  const [completedIds, setCompletedIds] = useState(new Set());
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -32,13 +35,27 @@ export default function StudentDashboard() {
         }
       })
       .catch((e) => setError(e.message));
+    // Load lessons + progress to power the per-skill cards.
+    Promise.all([api.lessons(), api.progress(user.id)])
+      .then(([ls, prog]) => {
+        setLessons(ls);
+        setCompletedIds(new Set(prog.filter((p) => p.completed).map((p) => p.lesson_id)));
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
   function startNext() {
-    const lesson = data?.next_lesson;
-    if (!lesson) return;
-    navigate(lesson.type === 'quiz' ? `/quiz/${lesson.id}` : `/lesson/${lesson.id}`);
+    if (data?.next_lesson) navigate(lessonPath(data.next_lesson));
+  }
+
+  // First not-yet-completed lesson in a category (by difficulty).
+  function nextInCategory(category) {
+    return lessons.find((l) => l.category === category && !completedIds.has(l.id)) || null;
+  }
+  function startCategory(category) {
+    const lesson = nextInCategory(category);
+    if (lesson) navigate(lessonPath(lesson));
   }
 
   if (error) return <Layout><p className="card text-center">{error}</p></Layout>;
@@ -79,6 +96,31 @@ export default function StudentDashboard() {
             {lang === 'si' ? data.next_lesson.title_si : data.next_lesson.title_en}
           </p>
         )}
+
+        {/* Choose a skill to practise (3 disability areas) */}
+        <div className="space-y-3">
+          <h2 className="text-xl font-bold">🌈 {t('chooseSkill')}</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {Object.entries(CATEGORY_META).map(([cat, meta]) => {
+              const next = nextInCategory(cat);
+              const total = lessons.filter((l) => l.category === cat).length;
+              const doneCount = lessons.filter((l) => l.category === cat && completedIds.has(l.id)).length;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => startCategory(cat)}
+                  disabled={!next}
+                  className={`card flex flex-col items-center gap-2 text-center ${meta.color} disabled:opacity-50`}
+                >
+                  <span className="text-5xl" aria-hidden="true">{meta.emoji}</span>
+                  <span className="text-lg font-bold">{lang === 'si' ? meta.si : meta.en}</span>
+                  <span className="text-sm text-ink/70">{doneCount}/{total} ✅</span>
+                  <span className="text-sm font-semibold">{next ? `▶️ ${t('play')}` : `🎉 ${t('allDone')}`}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Badges */}
         <div className="card space-y-3">

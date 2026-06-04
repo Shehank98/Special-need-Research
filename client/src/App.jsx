@@ -5,6 +5,8 @@ import Login from './pages/Login.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
 import LessonPlayer from './pages/LessonPlayer.jsx';
 import Quiz from './pages/Quiz.jsx';
+import NumberGame from './pages/NumberGame.jsx';
+import SpellingGame from './pages/SpellingGame.jsx';
 import Badges from './pages/Badges.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import LessonManager from './pages/LessonManager.jsx';
@@ -46,6 +48,22 @@ export default function App() {
         element={
           <ProtectedRoute role="student">
             <Quiz />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/numbers/:id"
+        element={
+          <ProtectedRoute role="student">
+            <NumberGame />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/spelling/:id"
+        element={
+          <ProtectedRoute role="student">
+            <SpellingGame />
           </ProtectedRoute>
         }
       />
