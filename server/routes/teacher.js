@@ -76,23 +76,29 @@ async function buildReport() {
   const rows = result.rows;
 
   // Per-category breakdown (one row per student per disability area).
-  const catRes = await query(`
-    SELECT p.student_id, l.category,
-           COUNT(*) FILTER (WHERE p.completed) AS done,
-           COALESCE(ROUND(AVG(p.score) FILTER (WHERE p.completed)), 0) AS avg_score
-    FROM progress p
-    JOIN lessons l ON l.id = p.lesson_id
-    GROUP BY p.student_id, l.category
-  `);
-
+  // Resilient: if the lessons.category column hasn't been migrated yet, skip the
+  // breakdown instead of failing the whole report.
   const CATEGORIES = ['dyslexia', 'dyscalculia', 'dysorthographia'];
   const byStudent = {};
-  for (const r of catRes.rows) {
-    byStudent[r.student_id] = byStudent[r.student_id] || {};
-    byStudent[r.student_id][r.category] = {
-      done: Number(r.done),
-      avg_score: Number(r.avg_score),
-    };
+  try {
+    const catRes = await query(`
+      SELECT p.student_id, l.category,
+             COUNT(*) FILTER (WHERE p.completed) AS done,
+             COALESCE(ROUND(AVG(p.score) FILTER (WHERE p.completed)), 0) AS avg_score
+      FROM progress p
+      JOIN lessons l ON l.id = p.lesson_id
+      GROUP BY p.student_id, l.category
+    `);
+    for (const r of catRes.rows) {
+      const cat = r.category || 'dyslexia';
+      byStudent[r.student_id] = byStudent[r.student_id] || {};
+      byStudent[r.student_id][cat] = {
+        done: Number(r.done),
+        avg_score: Number(r.avg_score),
+      };
+    }
+  } catch (err) {
+    console.warn('category breakdown unavailable (run migrations to enable):', err.message);
   }
 
   // Attach category stats + compute fast-action attention flags per student.
