@@ -138,6 +138,9 @@ export default function StudentDashboard() {
               );
             })}
           </div>
+          <button onClick={() => navigate('/writing')} className="card mt-3 flex w-full items-center justify-center gap-2 bg-pastel-pink text-lg font-bold">
+            ✍️ {t('writing')}
+          </button>
         </div>
 
         {/* Badges */}

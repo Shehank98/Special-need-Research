@@ -7,6 +7,7 @@ import LessonPlayer from './pages/LessonPlayer.jsx';
 import Quiz from './pages/Quiz.jsx';
 import NumberGame from './pages/NumberGame.jsx';
 import SpellingGame from './pages/SpellingGame.jsx';
+import WritingActivity from './pages/WritingActivity.jsx';
 import Badges from './pages/Badges.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import LessonManager from './pages/LessonManager.jsx';
@@ -64,6 +65,14 @@ export default function App() {
         element={
           <ProtectedRoute role="student">
             <SpellingGame />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/writing"
+        element={
+          <ProtectedRoute role="student">
+            <WritingActivity />
           </ProtectedRoute>
         }
       />

@@ -86,6 +86,13 @@ export const STRINGS = {
   chooseSkill: { en: 'Choose what to practise', si: 'පුහුණු කරන්නේ කුමක්දැයි තෝරන්න' },
   play: { en: 'Play', si: 'සෙල්ලම් කරන්න' },
   allDone: { en: 'All done!', si: 'සියල්ල අවසන්!' },
+  // Writing / tracing activity
+  writing: { en: 'Writing', si: 'ලිවීම' },
+  traceTitle: { en: 'Trace the word', si: 'වචනය ඇඳින්න' },
+  writeTitle: { en: 'Write the word', si: 'වචනය ලියන්න' },
+  traceHelp: { en: 'Follow the dotted lines with your finger.', si: 'තිත් රේඛා ඔබේ ඇඟිල්ලෙන් අනුගමනය කරන්න.' },
+  writeHelp: { en: 'Write the word in the box.', si: 'කොටුව තුළ වචනය ලියන්න.' },
+  guideLevel: { en: 'Guide level', si: 'මඟ පෙන්වීම් මට්ටම' },
   // Categories
   category: { en: 'Skill area', si: 'කුසලතා ක්ෂේත්‍රය' },
   // Teacher analytics
