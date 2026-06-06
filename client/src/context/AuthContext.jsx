@@ -20,31 +20,37 @@ export function AuthProvider({ children }) {
     setReady(true);
   }, []);
 
-  function persist(token, u) {
+  function persist(token, u, session) {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(u));
+    if (session) localStorage.setItem('session', JSON.stringify(session));
+    else localStorage.removeItem('session');
     setUser(u);
     return u;
   }
 
   async function login(payload) {
-    const { token, user: u } = await api.login(payload);
-    return persist(token, u);
+    const { token, user: u, session } = await api.login(payload);
+    return persist(token, u, session);
   }
 
   async function register(payload) {
     const { token, user: u } = await api.register(payload);
-    return persist(token, u);
+    return persist(token, u, null);
   }
 
   async function logout() {
+    // Close the research session (time-on-task) before clearing local state.
     try {
-      await api.logout();
+      const session = JSON.parse(localStorage.getItem('session') || 'null');
+      if (session?.id) await api.endSession(session.id);
+      else await api.logout();
     } catch {
       /* best effort */
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('session');
     setUser(null);
   }
 

@@ -27,6 +27,15 @@ function getToken() {
   return localStorage.getItem('token');
 }
 
+// The current study session (set at login), used to stamp events for research.
+export function getSession() {
+  try {
+    return JSON.parse(localStorage.getItem('session') || 'null');
+  } catch {
+    return null;
+  }
+}
+
 async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (auth) {
@@ -70,7 +79,22 @@ export const api = {
   deleteLesson: (id) => request(`/api/lessons/${id}`, { method: 'DELETE' }),
   saveProgress: (payload) => request('/api/progress', { method: 'POST', body: payload }),
   progress: (studentId) => request(`/api/progress/${studentId}`),
-  logEvent: (payload) => request('/api/events', { method: 'POST', body: payload }),
+  // Silent engagement logging — auto-stamps the current session_id + week_number.
+  logEvent: (payload) => {
+    const s = getSession();
+    const enriched = {
+      session_id: s?.id ?? null,
+      week_number: s?.week_number ?? null,
+      ...payload,
+    };
+    return request('/api/events', { method: 'POST', body: enriched });
+  },
+  endSession: (sessionId) => request(`/api/sessions/${sessionId}/end`, { method: 'POST' }),
+  logTracing: (payload) => {
+    const s = getSession();
+    return request('/api/tracing', { method: 'POST', body: { session_id: s?.id ?? null, ...payload } });
+  },
+  guideLevel: (studentId) => request(`/api/tracing/${studentId}/guide-level`),
   badges: (studentId) => request(`/api/badges/${studentId}`),
   awardBadge: (payload) => request('/api/badges', { method: 'POST', body: payload }),
   teacherStudents: () => request('/api/teacher/students'),

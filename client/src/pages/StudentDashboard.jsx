@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { api } from '../api.js';
+import { api, getSession } from '../api.js';
+import MoodCheckIn from '../components/MoodCheckIn.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { useTTS } from '../hooks/useTTS.js';
@@ -19,6 +20,22 @@ export default function StudentDashboard() {
   const [lessons, setLessons] = useState([]);
   const [completedIds, setCompletedIds] = useState(new Set());
   const [error, setError] = useState('');
+  // Start-of-session mood check-in: once per session.
+  const session = getSession();
+  const moodKey = session?.id ? `mood_start_${session.id}` : null;
+  const [showMoodStart, setShowMoodStart] = useState(
+    () => !!moodKey && !localStorage.getItem(moodKey)
+  );
+
+  async function handleMoodStart(value) {
+    try {
+      await api.logEvent({ event_type: 'mood', activity_type: 'mood', metric_name: 'mood_start', metric_value: value });
+    } catch {
+      /* best effort */
+    }
+    if (moodKey) localStorage.setItem(moodKey, '1');
+    setShowMoodStart(false);
+  }
 
   useEffect(() => {
     let greeted = false;
@@ -65,6 +82,7 @@ export default function StudentDashboard() {
 
   return (
     <Layout>
+      {showMoodStart && <MoodCheckIn phase="start" onPick={handleMoodStart} />}
       <div className="space-y-6">
         {/* Greeting */}
         <div className="card flex items-center justify-between gap-3">

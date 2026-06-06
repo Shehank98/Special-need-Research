@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { experienceFor } from '../lib/experience.js';
 import { useTTS } from '../hooks/useTTS.js';
 import Layout from '../components/Layout.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
@@ -15,6 +17,8 @@ export default function NumberGame() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
+  const exp = experienceFor(user);
   const { speak } = useTTS();
 
   const [lesson, setLesson] = useState(null);
@@ -57,24 +61,40 @@ export default function NumberGame() {
     } catch {
       setResult({ progress: { score }, new_badges: [], score });
     }
+    api.logEvent({ event_type: 'lesson_completed', activity_type: lesson.category, metric_name: 'score', metric_value: score }).catch(() => {});
+    api.logEvent({ event_type: 'time_on_task', activity_type: lesson.category, metric_name: 'time_on_task', metric_value: timeSpent }).catch(() => {});
     setDone(true);
   }
 
   function answer(value) {
     if (feedback) return;
+    const correct = value === q.answer;
     api
-      .logEvent({ event_type: 'quiz_answered', metadata: { lesson_id: id, correct: value === q.answer, step } })
+      .logEvent({ event_type: 'quiz_answered', activity_type: lesson.category, metric_name: 'attempt', metric_value: correct ? 1 : 0, metadata: { lesson_id: id, correct, step } })
       .catch(() => {});
-    if (value === q.answer) {
+
+    const advance = (newCorrect) => {
+      setShowHint(false);
+      if (step < questions.length - 1) setStep((s) => s + 1);
+      else finish(newCorrect, hintsUsed);
+    };
+
+    // Control group: no instant feedback — record and advance (no retry loop).
+    if (!exp.instantFeedback) {
+      const newCorrect = correct ? correctCount + 1 : correctCount;
+      if (correct) setCorrectCount(newCorrect);
+      advance(newCorrect);
+      return;
+    }
+
+    if (correct) {
       setFeedback('correct');
       speak(t('greatJob'), lang, { log: false });
       const newCorrect = correctCount + 1;
       setCorrectCount(newCorrect);
       setTimeout(() => {
         setFeedback(null);
-        setShowHint(false);
-        if (step < questions.length - 1) setStep((s) => s + 1);
-        else finish(newCorrect, hintsUsed);
+        advance(newCorrect);
       }, 900);
     } else {
       setFeedback('wrong');
@@ -92,10 +112,10 @@ export default function NumberGame() {
   }
 
   if (done) {
-    const newBadges = result?.new_badges || [];
+    const newBadges = exp.gamified ? result?.new_badges || [] : [];
     return (
       <Layout>
-        <Confetti show />
+        {exp.gamified && <Confetti show />}
         <div className="card animate-pop-in space-y-5 text-center">
           <div className="text-6xl" aria-hidden="true">🎉</div>
           <h1 className="text-3xl font-bold">{t('lessonComplete')}</h1>

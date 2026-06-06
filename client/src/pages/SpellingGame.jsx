@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { experienceFor } from '../lib/experience.js';
 import { useTTS } from '../hooks/useTTS.js';
 import Layout from '../components/Layout.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
@@ -24,6 +26,8 @@ export default function SpellingGame() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
+  const exp = experienceFor(user);
   const { speak } = useTTS();
 
   const [lesson, setLesson] = useState(null);
@@ -77,6 +81,8 @@ export default function SpellingGame() {
     } catch {
       setResult({ progress: { score }, new_badges: [], score });
     }
+    api.logEvent({ event_type: 'lesson_completed', activity_type: lesson.category, metric_name: 'score', metric_value: score }).catch(() => {});
+    api.logEvent({ event_type: 'time_on_task', activity_type: lesson.category, metric_name: 'time_on_task', metric_value: timeSpent }).catch(() => {});
     setDone(true);
   }
 
@@ -88,25 +94,31 @@ export default function SpellingGame() {
 
     if (nextBuilt.length === word.length) {
       const attempt = nextBuilt.map((b) => b.char).join('');
-      api.logEvent({ event_type: 'quiz_answered', metadata: { lesson_id: id, word, correct: attempt === word } }).catch(() => {});
-      if (attempt === word) {
-        setFeedback('correct');
-        speak(item.word_en, 'en', { log: false });
+      const correct = attempt === word;
+      api.logEvent({ event_type: 'quiz_answered', activity_type: lesson.category, metric_name: 'attempt', metric_value: correct ? 1 : 0, metadata: { lesson_id: id, word, correct } }).catch(() => {});
+      if (correct) {
+        if (exp.instantFeedback) {
+          setFeedback('correct');
+          speak(item.word_en, 'en', { log: false });
+        }
         const nextSolved = solved + 1;
         setSolved(nextSolved);
         setTimeout(() => {
+          setFeedback(null);
           if (index < items.length - 1) setIndex((i) => i + 1);
           else finish(nextSolved, hintsUsed);
-        }, 1000);
+        }, exp.instantFeedback ? 1000 : 200);
       } else {
-        setFeedback('wrong');
-        speak(t('tryAgain'), lang, { log: false });
+        if (exp.instantFeedback) {
+          setFeedback('wrong');
+          speak(t('tryAgain'), lang, { log: false });
+        }
         setTimeout(() => {
           // reset the word for another try
           setBuilt([]);
           setTiles((ts) => ts.map((x) => ({ ...x, used: false })));
           setFeedback(null);
-        }, 900);
+        }, exp.instantFeedback ? 900 : 200);
       }
     }
   }
@@ -130,10 +142,10 @@ export default function SpellingGame() {
   }
 
   if (done) {
-    const newBadges = result?.new_badges || [];
+    const newBadges = exp.gamified ? result?.new_badges || [] : [];
     return (
       <Layout>
-        <Confetti show />
+        {exp.gamified && <Confetti show />}
         <div className="card animate-pop-in space-y-5 text-center">
           <div className="text-6xl" aria-hidden="true">🎉</div>
           <h1 className="text-3xl font-bold">{t('lessonComplete')}</h1>

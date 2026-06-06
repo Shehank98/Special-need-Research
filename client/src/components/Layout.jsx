@@ -1,17 +1,38 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import LanguageToggle from './LanguageToggle.jsx';
+import MoodCheckIn from './MoodCheckIn.jsx';
 
 // Page shell with a top bar (app name, language toggle, logout).
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [showMoodEnd, setShowMoodEnd] = useState(false);
 
-  async function handleLogout() {
+  async function finishLogout() {
     await logout();
     navigate('/');
+  }
+
+  function handleLogout() {
+    // Students get an end-of-session mood check-in (emotional engagement);
+    // teachers log out directly.
+    if (user?.role === 'student') setShowMoodEnd(true);
+    else finishLogout();
+  }
+
+  async function handleMoodEnd(value) {
+    try {
+      await api.logEvent({ event_type: 'mood', activity_type: 'mood', metric_name: 'mood_end', metric_value: value });
+    } catch {
+      /* best effort */
+    }
+    setShowMoodEnd(false);
+    finishLogout();
   }
 
   return (
@@ -34,6 +55,7 @@ export default function Layout({ children }) {
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-4 py-6">{children}</main>
+      {showMoodEnd && <MoodCheckIn phase="end" onPick={handleMoodEnd} />}
     </div>
   );
 }

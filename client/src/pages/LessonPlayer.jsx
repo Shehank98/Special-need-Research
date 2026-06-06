@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { experienceFor } from '../lib/experience.js';
 import { useTTS } from '../hooks/useTTS.js';
 import Layout from '../components/Layout.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
@@ -15,6 +17,8 @@ export default function LessonPlayer() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
+  const exp = experienceFor(user);
   const { speak } = useTTS();
 
   const [lesson, setLesson] = useState(null);
@@ -50,17 +54,19 @@ export default function LessonPlayer() {
     } catch {
       setResult({ progress: { score }, new_badges: [] });
     }
+    api.logEvent({ event_type: 'lesson_completed', activity_type: lesson.category, metric_name: 'score', metric_value: score }).catch(() => {});
+    api.logEvent({ event_type: 'time_on_task', activity_type: lesson.category, metric_name: 'time_on_task', metric_value: timeSpent }).catch(() => {});
     setDone(true);
   }
 
   // ---- Completion screen ----
   if (done) {
-    const newBadges = result?.new_badges || [];
+    const newBadges = exp.gamified ? result?.new_badges || [] : [];
     return (
       <Layout>
-        <Confetti show />
+        {exp.gamified && <Confetti show />}
         <div className="card animate-pop-in space-y-5 text-center">
-          <div className="text-6xl" aria-hidden="true">🎉</div>
+          <div className="text-6xl" aria-hidden="true">{exp.gamified ? '🎉' : '✅'}</div>
           <h1 className="text-3xl font-bold">{t('lessonComplete')}</h1>
           <p className="text-2xl">
             {t('yourScore')}: <strong>{result?.progress?.score ?? 100}</strong>
@@ -133,11 +139,13 @@ export default function LessonPlayer() {
     speak(lang === 'si' ? item.word_si : item.word_en, lang);
   }
   function handlePicTap(item) {
-    if (selectedWord === item.word_en) {
+    const correct = selectedWord === item.word_en;
+    api.logEvent({ event_type: 'quiz_answered', activity_type: lesson.category, metric_name: 'attempt', metric_value: correct ? 1 : 0, metadata: { lesson_id: id, word: item.word_en, correct } }).catch(() => {});
+    if (correct) {
       setMatched((m) => ({ ...m, [item.word_en]: true }));
       setSelectedWord(null);
-      speak(t('greatJob'), lang, { log: false });
-    } else {
+      if (exp.instantFeedback) speak(t('greatJob'), lang, { log: false });
+    } else if (exp.instantFeedback) {
       speak(t('tryAgain'), lang, { log: false });
     }
   }
