@@ -176,9 +176,11 @@ app.use((err, _req, res, _next) => {
 // or upgraded deploy needs no manual SQL. Failure is logged but non-fatal so the
 // /api/health endpoint can still report a disconnected DB.
 async function start() {
-  if (process.env.RUN_MIGRATIONS === 'true') {
+  // Apply the idempotent schema on boot by default. Opt out with
+  // RUN_MIGRATIONS=false. Safe to run every boot (CREATE/ALTER ... IF NOT EXISTS).
+  if (process.env.RUN_MIGRATIONS !== 'false') {
     try {
-      console.log('⏳ RUN_MIGRATIONS=true — applying schema…');
+      console.log('⏳ Applying schema (set RUN_MIGRATIONS=false to skip)…');
       await runMigrations();
       console.log('✅ Database schema is up to date.');
     } catch (err) {

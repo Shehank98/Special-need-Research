@@ -151,17 +151,28 @@ router.post(
       const week = first
         ? Math.floor((Date.now() - new Date(first).getTime()) / (7 * 86400000)) + 1
         : 1;
-      const sess = await query(
-        `INSERT INTO study_sessions (student_id, session_date, login_time, week_number, study_group)
-         VALUES ($1, CURRENT_DATE, NOW(), $2, $3) RETURNING id, week_number`,
-        [user.id, week, user.study_group || null]
-      );
 
-      res.json({
-        token: signToken(user),
-        user: publicUser(user),
-        session: { id: sess.rows[0].id, week_number: sess.rows[0].week_number },
-      });
+      // Open the session. Falls back to a basic row if the research columns
+      // haven't been migrated yet, so login never fails on a stale schema.
+      let session = { id: null, week_number: week };
+      try {
+        const sess = await query(
+          `INSERT INTO study_sessions (student_id, session_date, login_time, week_number, study_group)
+           VALUES ($1, CURRENT_DATE, NOW(), $2, $3) RETURNING id, week_number`,
+          [user.id, week, user.study_group || null]
+        );
+        session = { id: sess.rows[0].id, week_number: sess.rows[0].week_number };
+      } catch (e) {
+        console.warn('session week/group columns missing, using basic session:', e.message);
+        const sess = await query(
+          `INSERT INTO study_sessions (student_id, session_date, login_time)
+           VALUES ($1, CURRENT_DATE, NOW()) RETURNING id`,
+          [user.id]
+        );
+        session = { id: sess.rows[0].id, week_number: week };
+      }
+
+      res.json({ token: signToken(user), user: publicUser(user), session });
     } catch (err) {
       console.error('login error:', err.message);
       res.status(500).json({ error: 'Login failed' });
