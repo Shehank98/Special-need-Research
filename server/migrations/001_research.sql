@@ -20,6 +20,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS anon_code VARCHAR(20);
 -- anon_code must be unique when present (used for login & reports).
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_anon_code
   ON users (anon_code) WHERE anon_code IS NOT NULL;
+-- Research students are anonymous (identified by anon_code, no name).
+ALTER TABLE users ALTER COLUMN name DROP NOT NULL;
 
 -- ---- study_sessions == research "sessions" ----
 ALTER TABLE study_sessions ADD COLUMN IF NOT EXISTS week_number INT;

@@ -21,6 +21,9 @@ ALTER TABLE study_sessions DROP COLUMN IF EXISTS study_group;
 ALTER TABLE study_sessions DROP COLUMN IF EXISTS week_number;
 
 DROP INDEX IF EXISTS idx_users_anon_code;
+-- NOTE: name's NOT NULL is intentionally NOT restored here — re-adding it would
+-- fail if any anonymous (name IS NULL) research students exist. Restore manually
+-- with `ALTER TABLE users ALTER COLUMN name SET NOT NULL;` only after backfilling.
 ALTER TABLE users DROP COLUMN IF EXISTS anon_code;
 ALTER TABLE users DROP COLUMN IF EXISTS difficulty_type;
 ALTER TABLE users DROP COLUMN IF EXISTS age;

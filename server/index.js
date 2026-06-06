@@ -15,6 +15,8 @@ import progressRoutes from './routes/progress.js';
 import eventRoutes from './routes/events.js';
 import badgeRoutes from './routes/badges.js';
 import teacherRoutes from './routes/teacher.js';
+import sessionRoutes from './routes/sessions.js';
+import tracingRoutes from './routes/tracing.js';
 import { requireAuth } from './middleware/auth.js';
 import { query } from './db/pool.js';
 import { runMigrations } from './db/migrate.js';
@@ -107,6 +109,8 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/teacher', teacherRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/tracing', tracingRoutes);
 
 // Record a logout time for the most recent open study session.
 app.post('/api/auth/logout', requireAuth, async (req, res) => {

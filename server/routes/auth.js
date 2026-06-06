@@ -19,7 +19,17 @@ function handleValidation(req, res) {
 }
 
 function publicUser(u) {
-  return { id: u.id, name: u.name, role: u.role, language: u.language, grade: u.grade };
+  return {
+    id: u.id,
+    name: u.name,
+    role: u.role,
+    language: u.language,
+    grade: u.grade,
+    study_group: u.study_group || null,
+    anon_code: u.anon_code || null,
+    difficulty_type: u.difficulty_type || null,
+    age: u.age ?? null,
+  };
 }
 
 // POST /api/auth/register  (teacher accounts only)
@@ -59,18 +69,20 @@ router.post(
 );
 
 // POST /api/auth/login
-// Students: { name, role: 'student', language?, grade? } (auto-registered).
+// Students: { role: 'student', anon_code } (research) OR { name } (legacy/auto-create).
 // Teachers: { name, role: 'teacher', password }.
+// On student login a study session is opened and returned as `session`.
 router.post(
   '/login',
-  body('name').trim().isLength({ min: 1, max: 100 }).withMessage('Name is required'),
+  body('name').optional({ nullable: true }).trim().isLength({ max: 100 }),
+  body('anon_code').optional({ nullable: true }).trim().isLength({ max: 20 }),
   body('role').isIn(['teacher', 'student']).withMessage('A valid role is required'),
   body('grade').optional({ nullable: true }).isInt({ min: 1, max: 12 }).withMessage('Grade must be 1-12'),
   async (req, res) => {
     if (!handleValidation(req, res)) return;
     try {
       const { name, role, language = 'en', grade = null, password } = req.body;
-      const cleanName = name.trim();
+      const cleanName = (name || '').trim();
       const lang = ['en', 'si'].includes(language) ? language : 'en';
 
       if (role === 'teacher') {
@@ -98,31 +110,58 @@ router.post(
         return res.json({ token: signToken(teacher), user: publicUser(teacher) });
       }
 
-      // Student: find or auto-create.
-      const existing = await query(
-        "SELECT * FROM users WHERE LOWER(name) = LOWER($1) AND role = 'student' LIMIT 1",
-        [cleanName]
-      );
+      // Student: by anon_code (research, pre-created) or by name (legacy/auto-create).
+      const anonCode = (req.body.anon_code || '').trim();
       let user;
-      if (existing.rows.length > 0) {
-        user = existing.rows[0];
-      } else {
-        const inserted = await query(
-          `INSERT INTO users (name, role, language, grade)
-           VALUES ($1, 'student', $2, $3) RETURNING *`,
-          [cleanName, lang, grade]
+      if (anonCode) {
+        const r = await query(
+          "SELECT * FROM users WHERE anon_code = $1 AND role = 'student' LIMIT 1",
+          [anonCode]
         );
-        user = inserted.rows[0];
+        if (r.rows.length === 0) {
+          return res.status(401).json({ error: 'Student code not found' });
+        }
+        user = r.rows[0];
+      } else {
+        if (!cleanName) {
+          return res.status(400).json({ error: 'A name or student code is required' });
+        }
+        const existing = await query(
+          "SELECT * FROM users WHERE LOWER(name) = LOWER($1) AND role = 'student' LIMIT 1",
+          [cleanName]
+        );
+        if (existing.rows.length > 0) {
+          user = existing.rows[0];
+        } else {
+          const inserted = await query(
+            `INSERT INTO users (name, role, language, grade)
+             VALUES ($1, 'student', $2, $3) RETURNING *`,
+            [cleanName, lang, grade]
+          );
+          user = inserted.rows[0];
+        }
       }
 
-      // Record a study-session login (research metric).
-      await query(
-        `INSERT INTO study_sessions (student_id, session_date, login_time)
-         VALUES ($1, CURRENT_DATE, NOW())`,
+      // Open a study session, stamping the research week_number + group.
+      const firstRes = await query(
+        'SELECT MIN(login_time) AS first FROM study_sessions WHERE student_id = $1',
         [user.id]
       );
+      const first = firstRes.rows[0].first;
+      const week = first
+        ? Math.floor((Date.now() - new Date(first).getTime()) / (7 * 86400000)) + 1
+        : 1;
+      const sess = await query(
+        `INSERT INTO study_sessions (student_id, session_date, login_time, week_number, study_group)
+         VALUES ($1, CURRENT_DATE, NOW(), $2, $3) RETURNING id, week_number`,
+        [user.id, week, user.study_group || null]
+      );
 
-      res.json({ token: signToken(user), user: publicUser(user) });
+      res.json({
+        token: signToken(user),
+        user: publicUser(user),
+        session: { id: sess.rows[0].id, week_number: sess.rows[0].week_number },
+      });
     } catch (err) {
       console.error('login error:', err.message);
       res.status(500).json({ error: 'Login failed' });
