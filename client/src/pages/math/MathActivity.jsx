@@ -12,6 +12,7 @@ import Fractions from './Fractions.jsx';
 import Shapes from './Shapes.jsx';
 import Shop from './Shop.jsx';
 import BarChart from './BarChart.jsx';
+import Assessment from './Assessment.jsx';
 
 const REGISTRY = {
   place_value: PlaceValue,
@@ -24,6 +25,7 @@ const REGISTRY = {
   shapes: Shapes,
   shop: Shop,
   bar_chart: BarChart,
+  assessment: Assessment,
 };
 
 export default function MathActivity() {

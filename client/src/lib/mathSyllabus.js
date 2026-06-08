@@ -98,8 +98,8 @@ export const MATH_MODULES = [
     color: 'bg-rose-100',
     accent: 'text-rose-700',
     topics: [
-      { id: 'topic-quiz', en: 'Topic Quizzes', si: 'මාතෘකා ප්‍රශ්නාවලි', activity: null },
-      { id: 'unit-test', en: 'End-of-Unit Tests', si: 'ඒකක අවසන් පරීක්ෂණ', activity: null },
+      { id: 'topic-quiz', en: 'Mixed Quiz', si: 'මිශ්‍ර ප්‍රශ්නාවලිය', activity: 'assessment' },
+      { id: 'unit-test', en: 'End-of-Unit Test', si: 'ඒකක අවසන් පරීක්ෂණය', activity: 'assessment' },
     ],
   },
 ];
