@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import { useTTS } from '../../hooks/useTTS.js';
 import MathResult from '../../components/math/MathResult.jsx';
@@ -13,13 +13,14 @@ const TOTAL = 6;
 const randNum = () => 1000 + Math.floor(Math.random() * 9000); // 1000–9999
 
 // Tap the digit that sits in the named place value.
-export default function PlaceValue({ onHome }) {
+export default function PlaceValue({ onHome, activityId }) {
   const { lang } = useLanguage();
   const { speak } = useTTS();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [done, setDone] = useState(false);
+  const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
     const n = randNum();
@@ -49,14 +50,17 @@ export default function PlaceValue({ onHome }) {
     setCorrect(0);
     setDone(false);
     setFeedback(null);
+    startRef.current = Date.now();
   }
 
   if (done) {
     return (
       <MathResult
+        activity={activityId}
         score={Math.round((correct / TOTAL) * 100)}
         correct={correct}
         total={TOTAL}
+        timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)}
         onAgain={restart}
         onHome={onHome}
       />

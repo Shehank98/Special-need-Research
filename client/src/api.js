@@ -95,6 +95,13 @@ export const api = {
     return request('/api/tracing', { method: 'POST', body: { session_id: s?.id ?? null, ...payload } });
   },
   guideLevel: (studentId) => request(`/api/tracing/${studentId}/guide-level`),
+  mathResult: (payload) => {
+    const s = getSession();
+    return request('/api/math/result', {
+      method: 'POST',
+      body: { session_id: s?.id ?? null, week_number: s?.week_number ?? null, ...payload },
+    });
+  },
   badges: (studentId) => request(`/api/badges/${studentId}`),
   awardBadge: (payload) => request('/api/badges', { method: 'POST', body: payload }),
   teacherStudents: () => request('/api/teacher/students'),

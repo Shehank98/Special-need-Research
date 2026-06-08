@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import MathResult from '../../components/math/MathResult.jsx';
 
@@ -30,13 +30,14 @@ function cells(n, cols) {
   return s.split('');
 }
 
-export default function Addition({ onHome }) {
+export default function Addition({ onHome, activityId }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [done, setDone] = useState(false);
   const [entries, setEntries] = useState([]);
   const [checked, setChecked] = useState(false);
+  const startRef = useRef(Date.now());
 
   const q = useMemo(() => makeSum(), [round]);
   const cols = String(q.sum).length;
@@ -65,10 +66,11 @@ export default function Addition({ onHome }) {
 
   function restart() {
     setRound(0); setCorrect(0); setDone(false); setEntries([]); setChecked(false);
+    startRef.current = Date.now();
   }
 
   if (done) {
-    return <MathResult score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
   }
 
   const aCells = cells(q.a, cols);

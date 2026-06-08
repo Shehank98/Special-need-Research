@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import { useTTS } from '../../hooks/useTTS.js';
 import MathResult from '../../components/math/MathResult.jsx';
@@ -7,7 +7,7 @@ const TABLES = [2, 3, 4, 5, 6, 8, 10];
 const TOTAL = 8;
 const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
 
-export default function TimesTables({ onHome }) {
+export default function TimesTables({ onHome, activityId }) {
   const { lang } = useLanguage();
   const { speak } = useTTS();
   const [table, setTable] = useState(null); // null = pick screen; 'mixed' or a number
@@ -15,6 +15,7 @@ export default function TimesTables({ onHome }) {
   const [correct, setCorrect] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [done, setDone] = useState(false);
+  const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
     if (table == null) return null;
@@ -47,6 +48,7 @@ export default function TimesTables({ onHome }) {
 
   function restart() {
     setTable(null); setRound(0); setCorrect(0); setDone(false); setFeedback(null);
+    startRef.current = Date.now();
   }
 
   if (table == null) {
@@ -68,7 +70,7 @@ export default function TimesTables({ onHome }) {
   }
 
   if (done) {
-    return <MathResult score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
   }
 
   return (

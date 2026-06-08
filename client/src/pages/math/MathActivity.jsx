@@ -31,7 +31,7 @@ export default function MathActivity() {
       <div className="space-y-4">
         <button onClick={onHome} className="font-semibold text-sky-600">⬅️ {lang === 'si' ? 'ආපසු' : 'Back'}</button>
         <h1 className="text-2xl font-bold">{title}</h1>
-        <Activity onHome={onHome} />
+        <Activity onHome={onHome} activityId={activityId} />
       </div>
     </Layout>
   );

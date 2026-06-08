@@ -1,0 +1,110 @@
+import express from 'express';
+import { query } from '../db/pool.js';
+import { requireAuth } from '../middleware/auth.js';
+import { evaluateBadges } from '../utils/badges.js';
+
+const router = express.Router();
+
+// Catalogue of maths activities. Each maps to a lazily-created `lessons` row
+// (type 'math', category 'dyscalculia') so results flow into the existing
+// progress / teacher-report aggregation with no schema changes.
+const MATH_ACTIVITIES = {
+  place_value: { en: 'Place Value', si: 'ස්ථානීය අගය', difficulty: 2, module: 'numbers' },
+  addition: { en: 'Addition with Carrying', si: 'එකතු කිරීම', difficulty: 2, module: 'arithmetic' },
+  subtraction: { en: 'Subtraction with Borrowing', si: 'අඩු කිරීම', difficulty: 3, module: 'arithmetic' },
+  times_tables: { en: 'Multiplication Tables', si: 'ගුණන වගු', difficulty: 3, module: 'arithmetic' },
+  division: { en: 'Division', si: 'බෙදීම', difficulty: 3, module: 'arithmetic' },
+  clock: { en: 'Telling the Time', si: 'වේලාව කීම', difficulty: 2, module: 'measurement' },
+  fractions: { en: 'Fractions', si: 'භාග', difficulty: 3, module: 'numbers' },
+  shapes: { en: 'Shapes', si: 'හැඩතල', difficulty: 2, module: 'geometry' },
+  shop: { en: 'Virtual Shop', si: 'අතථ්‍ය වෙළඳසැල', difficulty: 3, module: 'money' },
+  bar_chart: { en: 'Bar Charts', si: 'තීරු සටහන්', difficulty: 3, module: 'data' },
+  assessment: { en: 'Maths Assessment', si: 'ගණිත තක්සේරුව', difficulty: 4, module: 'assessment' },
+};
+
+export { MATH_ACTIVITIES };
+
+// Find or create the lessons row backing a maths activity.
+async function ensureMathLesson(activity) {
+  const meta = MATH_ACTIVITIES[activity];
+  const found = await query(
+    "SELECT id FROM lessons WHERE type = 'math' AND content->>'activity' = $1 LIMIT 1",
+    [activity]
+  );
+  if (found.rows.length > 0) return found.rows[0].id;
+  const inserted = await query(
+    `INSERT INTO lessons (title_en, title_si, type, category, difficulty, content)
+     VALUES ($1, $2, 'math', 'dyscalculia', $3, $4) RETURNING id`,
+    [meta.en, meta.si, meta.difficulty, JSON.stringify({ activity, module: meta.module })]
+  );
+  return inserted.rows[0].id;
+}
+
+// POST /api/math/result -> record a completed maths activity for the student.
+// Body: { activity, score, time_spent_seconds?, correct?, total?, session_id?, week_number? }
+router.post('/result', requireAuth, async (req, res) => {
+  try {
+    const { activity, score = 0, time_spent_seconds = 0, correct = null, total = null } = req.body || {};
+    if (!MATH_ACTIVITIES[activity]) {
+      return res.status(400).json({ error: 'Unknown maths activity' });
+    }
+    const studentId = req.user.role === 'student' ? req.user.id : req.body.student_id;
+    if (!studentId) return res.status(400).json({ error: 'student_id required' });
+
+    const safeScore = Math.max(0, Math.min(100, Math.round(Number(score) || 0)));
+    const safeTime = Math.max(0, Math.min(86400, Math.round(Number(time_spent_seconds) || 0)));
+    const lessonId = await ensureMathLesson(activity);
+
+    // Upsert progress (one row per student+lesson).
+    const existing = await query(
+      'SELECT id FROM progress WHERE student_id = $1 AND lesson_id = $2 LIMIT 1',
+      [studentId, lessonId]
+    );
+    let progress;
+    if (existing.rows.length > 0) {
+      const r = await query(
+        `UPDATE progress
+         SET score = $1,
+             time_spent_seconds = COALESCE(time_spent_seconds, 0) + $2,
+             completed = TRUE, attempts = attempts + 1, completed_at = NOW()
+         WHERE id = $3 RETURNING *`,
+        [safeScore, safeTime, existing.rows[0].id]
+      );
+      progress = r.rows[0];
+    } else {
+      const r = await query(
+        `INSERT INTO progress (student_id, lesson_id, score, time_spent_seconds, completed, attempts, completed_at)
+         VALUES ($1, $2, $3, $4, TRUE, 1, NOW()) RETURNING *`,
+        [studentId, lessonId, safeScore, safeTime]
+      );
+      progress = r.rows[0];
+    }
+
+    // Engagement events (silent logging), tagged with the activity.
+    const sessionId = req.body.session_id || null;
+    const week = req.body.week_number || null;
+    await query(
+      `INSERT INTO engagement_events
+         (student_id, session_id, event_type, activity_type, metric_name, metric_value, week_number, metadata)
+       VALUES ($1, $2, 'lesson_completed', $3, 'score', $4, $5, $6)`,
+      [studentId, sessionId, activity, safeScore, week, JSON.stringify({ correct, total, module: MATH_ACTIVITIES[activity].module })]
+    );
+    if (safeTime > 0) {
+      await query(
+        `INSERT INTO engagement_events
+           (student_id, session_id, event_type, activity_type, metric_name, metric_value, week_number)
+         VALUES ($1, $2, 'time_on_task', $3, 'time_on_task', $4, $5)`,
+        [studentId, sessionId, activity, safeTime, week]
+      );
+    }
+
+    const newBadges = await evaluateBadges(studentId, { score: safeScore, timeSpent: safeTime, usedHint: false });
+
+    res.status(201).json({ ok: true, lesson_id: lessonId, progress, new_badges: newBadges });
+  } catch (err) {
+    console.error('math result error:', err.message);
+    res.status(500).json({ error: 'Failed to record maths result' });
+  }
+});
+
+export default router;

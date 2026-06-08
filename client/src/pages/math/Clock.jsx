@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import MathResult from '../../components/math/MathResult.jsx';
 
@@ -40,12 +40,13 @@ function AnalogClock({ hour, minute }) {
   );
 }
 
-export default function Clock({ onHome }) {
+export default function Clock({ onHome, activityId }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [done, setDone] = useState(false);
+  const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
     const hour = 1 + Math.floor(Math.random() * 12);
@@ -74,10 +75,11 @@ export default function Clock({ onHome }) {
 
   function restart() {
     setRound(0); setCorrect(0); setDone(false); setFeedback(null);
+    startRef.current = Date.now();
   }
 
   if (done) {
-    return <MathResult score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
   }
 
   return (
