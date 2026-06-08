@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import { useTTS } from '../../hooks/useTTS.js';
 import TeachVisual from './TeachVisual.jsx';
+import InteractiveTry from './InteractiveTry.jsx';
 
 // Animated, narrated "learn first" intro. Walks through teaching steps, reads
 // each aloud, then a big "Let's play!" button starts the game (onStart).
@@ -11,7 +12,8 @@ export default function TeachIntro({ steps, onStart }) {
   const [i, setI] = useState(0);
 
   const step = steps[i];
-  const text = lang === 'si' ? step.si : step.en;
+  const isTry = !!step.try;
+  const text = isTry ? (lang === 'si' ? step.try.prompt_si : step.try.prompt_en) : (lang === 'si' ? step.si : step.en);
   const last = i === steps.length - 1;
 
   // Read each step aloud as it appears.
@@ -33,23 +35,31 @@ export default function TeachIntro({ steps, onStart }) {
         {lang === 'si' ? 'මුලින් ඉගෙන ගමු' : 'Let’s learn first'}
       </div>
 
-      {/* Visual */}
-      <div key={i} className="flex min-h-[200px] items-center justify-center">
-        <TeachVisual v={step.visual} />
-      </div>
+      {isTry ? (
+        <div key={i} className="animate-fade-up">
+          <InteractiveTry spec={step.try} />
+        </div>
+      ) : (
+        <>
+          {/* Visual */}
+          <div key={i} className="flex min-h-[200px] items-center justify-center">
+            <TeachVisual v={step.visual} />
+          </div>
 
-      {/* Narration */}
-      <div key={`t-${i}`} className="animate-fade-up mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-sky-50 p-4">
-        <span className="text-4xl">🦉</span>
-        <p className="text-left text-lg font-semibold text-slate-700">{text}</p>
-        <button
-          onClick={() => speak(text, lang, { log: false })}
-          aria-label="listen"
-          className="ml-auto shrink-0 rounded-full bg-white px-3 py-2 text-xl shadow"
-        >
-          🔊
-        </button>
-      </div>
+          {/* Narration */}
+          <div key={`t-${i}`} className="animate-fade-up mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-sky-50 p-4">
+            <span className="text-4xl">🦉</span>
+            <p className="text-left text-lg font-semibold text-slate-700">{text}</p>
+            <button
+              onClick={() => speak(text, lang, { log: false })}
+              aria-label="listen"
+              className="ml-auto shrink-0 rounded-full bg-white px-3 py-2 text-xl shadow"
+            >
+              🔊
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Progress dots */}
       <div className="flex justify-center gap-2">
