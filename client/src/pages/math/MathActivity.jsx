@@ -4,14 +4,26 @@ import Layout from '../../components/Layout.jsx';
 import { findActivity } from '../../lib/mathSyllabus.js';
 import PlaceValue from './PlaceValue.jsx';
 import Addition from './Addition.jsx';
+import Subtraction from './Subtraction.jsx';
 import TimesTables from './TimesTables.jsx';
+import Division from './Division.jsx';
 import Clock from './Clock.jsx';
+import Fractions from './Fractions.jsx';
+import Shapes from './Shapes.jsx';
+import Shop from './Shop.jsx';
+import BarChart from './BarChart.jsx';
 
 const REGISTRY = {
   place_value: PlaceValue,
   addition: Addition,
+  subtraction: Subtraction,
   times_tables: TimesTables,
+  division: Division,
   clock: Clock,
+  fractions: Fractions,
+  shapes: Shapes,
+  shop: Shop,
+  bar_chart: BarChart,
 };
 
 export default function MathActivity() {

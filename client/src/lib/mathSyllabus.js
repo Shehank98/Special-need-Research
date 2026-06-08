@@ -16,7 +16,7 @@ export const MATH_MODULES = [
       { id: 'order', en: 'Order Numbers', si: 'සංඛ්‍යා පිළිවෙළට සැකසීම', activity: null },
       { id: 'patterns', en: 'Number Patterns', si: 'සංඛ්‍යා රටා', activity: null },
       { id: 'multiples', en: 'Multiples & Counting', si: 'ගුණාකාර හා ගණන් කිරීම', activity: null },
-      { id: 'fractions', en: 'Fractions', si: 'භාග', activity: null },
+      { id: 'fractions', en: 'Fractions', si: 'භාග', activity: 'fractions' },
       { id: 'roman', en: 'Roman Numerals', si: 'රෝම ඉලක්කම්', activity: null },
     ],
   },
@@ -29,9 +29,9 @@ export const MATH_MODULES = [
     accent: 'text-emerald-700',
     topics: [
       { id: 'addition', en: 'Addition with Carrying', si: 'එකතු කිරීම (රැගෙන යාම)', activity: 'addition' },
-      { id: 'subtraction', en: 'Subtraction with Borrowing', si: 'අඩු කිරීම (ණයට ගැනීම)', activity: null },
+      { id: 'subtraction', en: 'Subtraction with Borrowing', si: 'අඩු කිරීම (ණයට ගැනීම)', activity: 'subtraction' },
       { id: 'times-tables', en: 'Multiplication Tables', si: 'ගුණන වගු', activity: 'times_tables' },
-      { id: 'division', en: 'Division', si: 'බෙදීම', activity: null },
+      { id: 'division', en: 'Division', si: 'බෙදීම', activity: 'division' },
     ],
   },
   {
@@ -59,7 +59,7 @@ export const MATH_MODULES = [
     topics: [
       { id: 'currency', en: 'Notes & Coins', si: 'නෝට්ටු සහ කාසි', activity: null },
       { id: 'calc', en: 'Money Calculations', si: 'මුදල් ගණනය', activity: null },
-      { id: 'shop', en: 'Virtual Shop', si: 'අතථ්‍ය වෙළඳසැල', activity: null },
+      { id: 'shop', en: 'Virtual Shop', si: 'අතථ්‍ය වෙළඳසැල', activity: 'shop' },
       { id: 'receipts', en: 'Bills & Receipts', si: 'බිල්පත්', activity: null },
     ],
   },
@@ -71,7 +71,7 @@ export const MATH_MODULES = [
     color: 'bg-violet-100',
     accent: 'text-violet-700',
     topics: [
-      { id: 'shapes', en: '2D & 3D Shapes', si: 'හැඩතල', activity: null },
+      { id: 'shapes', en: '2D & 3D Shapes', si: 'හැඩතල', activity: 'shapes' },
       { id: 'faces', en: 'Faces, Edges & Corners', si: 'මුහුණත්, දාර', activity: null },
       { id: 'angles', en: 'Right Angles', si: 'සෘජු කෝණ', activity: null },
       { id: 'directions', en: 'Directions (N/S/E/W)', si: 'දිශාවන්', activity: null },
@@ -86,7 +86,7 @@ export const MATH_MODULES = [
     accent: 'text-teal-700',
     topics: [
       { id: 'tables', en: 'Read Tables', si: 'වගු කියවීම', activity: null },
-      { id: 'bar', en: 'Bar Charts', si: 'තීරු සටහන්', activity: null },
+      { id: 'bar', en: 'Bar Charts', si: 'තීරු සටහන්', activity: 'bar_chart' },
       { id: 'picto', en: 'Picture Graphs', si: 'පින්තූර ප්‍රස්තාර', activity: null },
     ],
   },
