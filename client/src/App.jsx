@@ -11,6 +11,9 @@ import WritingActivity from './pages/WritingActivity.jsx';
 import Badges from './pages/Badges.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import LessonManager from './pages/LessonManager.jsx';
+import MathHome from './pages/math/MathHome.jsx';
+import MathModule from './pages/math/MathModule.jsx';
+import MathActivity from './pages/math/MathActivity.jsx';
 
 export default function App() {
   const { user, ready } = useAuth();
@@ -28,8 +31,34 @@ export default function App() {
           )
         }
       />
+      {/* Grade 4 Maths is the student home */}
       <Route
         path="/home"
+        element={
+          <ProtectedRoute role="student">
+            <MathHome />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/math/:moduleId"
+        element={
+          <ProtectedRoute role="student">
+            <MathModule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/math/play/:activityId"
+        element={
+          <ProtectedRoute role="student">
+            <MathActivity />
+          </ProtectedRoute>
+        }
+      />
+      {/* Old game dashboard (badges/progress/mood) kept here */}
+      <Route
+        path="/progress"
         element={
           <ProtectedRoute role="student">
             <StudentDashboard />
