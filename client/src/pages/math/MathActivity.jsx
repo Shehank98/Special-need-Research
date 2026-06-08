@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import Layout from '../../components/Layout.jsx';
+import TeachIntro from '../../components/math/TeachIntro.jsx';
 import { findActivity } from '../../lib/mathSyllabus.js';
+import { TEACH } from '../../lib/mathTeach.js';
 import PlaceValue from './PlaceValue.jsx';
 import Addition from './Addition.jsx';
 import Subtraction from './Subtraction.jsx';
@@ -34,6 +37,9 @@ export default function MathActivity() {
   const { lang } = useLanguage();
   const Activity = REGISTRY[activityId];
   const info = findActivity(activityId);
+  const teachSteps = TEACH[activityId];
+  // Show the teaching intro first; the game starts when the child is ready.
+  const [phase, setPhase] = useState(teachSteps ? 'learn' : 'play');
 
   if (!Activity) return <Navigate to="/home" replace />;
 
@@ -45,7 +51,11 @@ export default function MathActivity() {
       <div className="space-y-4">
         <button onClick={onHome} className="font-semibold text-sky-600">⬅️ {lang === 'si' ? 'ආපසු' : 'Back'}</button>
         <h1 className="text-2xl font-bold">{title}</h1>
-        <Activity onHome={onHome} activityId={activityId} />
+        {phase === 'learn' ? (
+          <TeachIntro steps={teachSteps} onStart={() => setPhase('play')} />
+        ) : (
+          <Activity onHome={onHome} activityId={activityId} />
+        )}
       </div>
     </Layout>
   );
