@@ -162,6 +162,50 @@ export default function TeachVisual({ v }) {
       );
     }
 
+    case 'grid': {
+      const { rows = 3, cols = 4 } = v;
+      const cell = 36;
+      return (
+        <svg viewBox={`0 0 ${cols * cell + 2} ${rows * cell + 2}`} className="mx-auto h-auto w-full max-w-xs animate-bounce-in">
+          {Array.from({ length: rows }).map((_, ri) =>
+            Array.from({ length: cols }).map((_, ci) => (
+              <rect key={`${ri}-${ci}`} x={ci * cell + 1} y={ri * cell + 1} width={cell} height={cell} fill="#bae6fd" stroke="#0369a1" strokeWidth="2" />
+            ))
+          )}
+        </svg>
+      );
+    }
+
+    case 'angle': {
+      const deg = v.deg ?? 90;
+      const rad = (deg * Math.PI) / 180;
+      const x = 30 + 90 * Math.cos(-rad);
+      const y = 110 + 90 * Math.sin(-rad);
+      return (
+        <svg viewBox="0 0 160 130" className="mx-auto h-36 w-44 animate-bounce-in">
+          <line x1="30" y1="110" x2="150" y2="110" stroke="#4c1d95" strokeWidth="5" strokeLinecap="round" />
+          <line x1="30" y1="110" x2={x} y2={y} stroke="#7c3aed" strokeWidth="5" strokeLinecap="round" />
+          {deg === 90 && <rect x="30" y="92" width="18" height="18" fill="none" stroke="#4c1d95" strokeWidth="2" />}
+        </svg>
+      );
+    }
+
+    case 'compass': {
+      const dirs = { N: [80, 20], E: [140, 80], S: [80, 140], W: [20, 80] };
+      const [ax, ay] = dirs[v.dir || 'N'];
+      return (
+        <svg viewBox="0 0 160 160" className="mx-auto h-44 w-44 animate-bounce-in">
+          <circle cx="80" cy="80" r="70" fill="#fff" stroke="#1e293b" strokeWidth="3" />
+          <text x="80" y="24" textAnchor="middle" fontSize="16" fontWeight="bold">N</text>
+          <text x="146" y="86" textAnchor="middle" fontSize="16" fontWeight="bold">E</text>
+          <text x="80" y="152" textAnchor="middle" fontSize="16" fontWeight="bold">S</text>
+          <text x="14" y="86" textAnchor="middle" fontSize="16" fontWeight="bold">W</text>
+          <line x1="80" y1="80" x2={ax} y2={ay} stroke="#dc2626" strokeWidth="5" strokeLinecap="round" />
+          <circle cx="80" cy="80" r="6" fill="#dc2626" />
+        </svg>
+      );
+    }
+
     default:
       return null;
   }

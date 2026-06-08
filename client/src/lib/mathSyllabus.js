@@ -11,13 +11,13 @@ export const MATH_MODULES = [
     color: 'bg-sky-100',
     accent: 'text-sky-700',
     topics: [
-      { id: 'read-write', en: 'Read & Write Numbers to 10,000', si: 'සංඛ්‍යා කියවීම හා ලිවීම', activity: null },
+      { id: 'read-write', en: 'Read & Write Numbers to 10,000', si: 'සංඛ්‍යා කියවීම හා ලිවීම', activity: 'read_write' },
       { id: 'place-value', en: 'Place Value', si: 'ස්ථානීය අගය', activity: 'place_value' },
-      { id: 'order', en: 'Order Numbers', si: 'සංඛ්‍යා පිළිවෙළට සැකසීම', activity: null },
-      { id: 'patterns', en: 'Number Patterns', si: 'සංඛ්‍යා රටා', activity: null },
-      { id: 'multiples', en: 'Multiples & Counting', si: 'ගුණාකාර හා ගණන් කිරීම', activity: null },
+      { id: 'order', en: 'Order Numbers', si: 'සංඛ්‍යා පිළිවෙළට සැකසීම', activity: 'order' },
+      { id: 'patterns', en: 'Number Patterns', si: 'සංඛ්‍යා රටා', activity: 'patterns' },
+      { id: 'multiples', en: 'Multiples & Counting', si: 'ගුණාකාර හා ගණන් කිරීම', activity: 'multiples' },
       { id: 'fractions', en: 'Fractions', si: 'භාග', activity: 'fractions' },
-      { id: 'roman', en: 'Roman Numerals', si: 'රෝම ඉලක්කම්', activity: null },
+      { id: 'roman', en: 'Roman Numerals', si: 'රෝම ඉලක්කම්', activity: 'roman' },
     ],
   },
   {
@@ -43,10 +43,10 @@ export const MATH_MODULES = [
     accent: 'text-amber-700',
     topics: [
       { id: 'time', en: 'Telling the Time', si: 'වේලාව කීම', activity: 'clock' },
-      { id: 'capacity', en: 'Capacity (L & ml)', si: 'ධාරිතාව', activity: null },
-      { id: 'length', en: 'Length (cm & m)', si: 'දිග', activity: null },
-      { id: 'weight', en: 'Weight (g & kg)', si: 'බර', activity: null },
-      { id: 'area', en: 'Area', si: 'වර්ගඵලය', activity: null },
+      { id: 'capacity', en: 'Capacity (L & ml)', si: 'ධාරිතාව', activity: 'capacity' },
+      { id: 'length', en: 'Length (cm & m)', si: 'දිග', activity: 'length' },
+      { id: 'weight', en: 'Weight (g & kg)', si: 'බර', activity: 'weight' },
+      { id: 'area', en: 'Area', si: 'වර්ගඵලය', activity: 'area' },
     ],
   },
   {
@@ -57,10 +57,10 @@ export const MATH_MODULES = [
     color: 'bg-pink-100',
     accent: 'text-pink-700',
     topics: [
-      { id: 'currency', en: 'Notes & Coins', si: 'නෝට්ටු සහ කාසි', activity: null },
-      { id: 'calc', en: 'Money Calculations', si: 'මුදල් ගණනය', activity: null },
+      { id: 'currency', en: 'Notes & Coins', si: 'නෝට්ටු සහ කාසි', activity: 'currency' },
+      { id: 'calc', en: 'Money Calculations', si: 'මුදල් ගණනය', activity: 'calc' },
       { id: 'shop', en: 'Virtual Shop', si: 'අතථ්‍ය වෙළඳසැල', activity: 'shop' },
-      { id: 'receipts', en: 'Bills & Receipts', si: 'බිල්පත්', activity: null },
+      { id: 'receipts', en: 'Bills & Receipts', si: 'බිල්පත්', activity: 'receipts' },
     ],
   },
   {
@@ -72,9 +72,9 @@ export const MATH_MODULES = [
     accent: 'text-violet-700',
     topics: [
       { id: 'shapes', en: '2D & 3D Shapes', si: 'හැඩතල', activity: 'shapes' },
-      { id: 'faces', en: 'Faces, Edges & Corners', si: 'මුහුණත්, දාර', activity: null },
-      { id: 'angles', en: 'Right Angles', si: 'සෘජු කෝණ', activity: null },
-      { id: 'directions', en: 'Directions (N/S/E/W)', si: 'දිශාවන්', activity: null },
+      { id: 'faces', en: 'Faces, Edges & Corners', si: 'මුහුණත්, දාර', activity: 'faces' },
+      { id: 'angles', en: 'Right Angles', si: 'සෘජු කෝණ', activity: 'angles' },
+      { id: 'directions', en: 'Directions (N/S/E/W)', si: 'දිශාවන්', activity: 'directions' },
     ],
   },
   {
@@ -85,9 +85,9 @@ export const MATH_MODULES = [
     color: 'bg-teal-100',
     accent: 'text-teal-700',
     topics: [
-      { id: 'tables', en: 'Read Tables', si: 'වගු කියවීම', activity: null },
+      { id: 'tables', en: 'Read Tables', si: 'වගු කියවීම', activity: 'tables' },
       { id: 'bar', en: 'Bar Charts', si: 'තීරු සටහන්', activity: 'bar_chart' },
-      { id: 'picto', en: 'Picture Graphs', si: 'පින්තූර ප්‍රස්තාර', activity: null },
+      { id: 'picto', en: 'Picture Graphs', si: 'පින්තූර ප්‍රස්තාර', activity: 'picto' },
     ],
   },
   {

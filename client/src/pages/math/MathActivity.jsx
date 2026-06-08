@@ -16,6 +16,8 @@ import Shapes from './Shapes.jsx';
 import Shop from './Shop.jsx';
 import BarChart from './BarChart.jsx';
 import Assessment from './Assessment.jsx';
+import QuizGame from './QuizGame.jsx';
+import { GENERATORS } from '../../lib/mathGenerators.js';
 
 const REGISTRY = {
   place_value: PlaceValue,
@@ -36,12 +38,13 @@ export default function MathActivity() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const Activity = REGISTRY[activityId];
+  const generator = GENERATORS[activityId];
   const info = findActivity(activityId);
   const teachSteps = TEACH[activityId];
   // Show the teaching intro first; the game starts when the child is ready.
   const [phase, setPhase] = useState(teachSteps ? 'learn' : 'play');
 
-  if (!Activity) return <Navigate to="/home" replace />;
+  if (!Activity && !generator) return <Navigate to="/home" replace />;
 
   const title = info ? (lang === 'si' ? info.topic.si : info.topic.en) : '';
   const onHome = () => navigate(info ? `/math/${info.module.id}` : '/home');
@@ -53,8 +56,10 @@ export default function MathActivity() {
         <h1 className="text-2xl font-bold">{title}</h1>
         {phase === 'learn' ? (
           <TeachIntro steps={teachSteps} onStart={() => setPhase('play')} />
-        ) : (
+        ) : Activity ? (
           <Activity onHome={onHome} activityId={activityId} />
+        ) : (
+          <QuizGame activityId={activityId} generate={generator} />
         )}
       </div>
     </Layout>

@@ -20,6 +20,24 @@ const MATH_ACTIVITIES = {
   shop: { en: 'Virtual Shop', si: 'අතථ්‍ය වෙළඳසැල', difficulty: 3, module: 'money' },
   bar_chart: { en: 'Bar Charts', si: 'තීරු සටහන්', difficulty: 3, module: 'data' },
   assessment: { en: 'Maths Assessment', si: 'ගණිත තක්සේරුව', difficulty: 4, module: 'assessment' },
+  // Generator-based topics
+  read_write: { en: 'Read & Write Numbers', si: 'සංඛ්‍යා කියවීම', difficulty: 2, module: 'numbers' },
+  order: { en: 'Order Numbers', si: 'සංඛ්‍යා පිළිවෙළට', difficulty: 2, module: 'numbers' },
+  patterns: { en: 'Number Patterns', si: 'සංඛ්‍යා රටා', difficulty: 2, module: 'numbers' },
+  multiples: { en: 'Multiples', si: 'ගුණාකාර', difficulty: 3, module: 'numbers' },
+  roman: { en: 'Roman Numerals', si: 'රෝම ඉලක්කම්', difficulty: 3, module: 'numbers' },
+  capacity: { en: 'Capacity', si: 'ධාරිතාව', difficulty: 2, module: 'measurement' },
+  length: { en: 'Length', si: 'දිග', difficulty: 2, module: 'measurement' },
+  weight: { en: 'Weight', si: 'බර', difficulty: 2, module: 'measurement' },
+  area: { en: 'Area', si: 'වර්ගඵලය', difficulty: 3, module: 'measurement' },
+  currency: { en: 'Notes & Coins', si: 'නෝට්ටු සහ කාසි', difficulty: 2, module: 'money' },
+  calc: { en: 'Money Calculations', si: 'මුදල් ගණනය', difficulty: 3, module: 'money' },
+  receipts: { en: 'Bills & Receipts', si: 'බිල්පත්', difficulty: 3, module: 'money' },
+  faces: { en: 'Faces, Edges & Corners', si: 'මුහුණත්, දාර', difficulty: 2, module: 'geometry' },
+  angles: { en: 'Right Angles', si: 'සෘජු කෝණ', difficulty: 2, module: 'geometry' },
+  directions: { en: 'Directions', si: 'දිශාවන්', difficulty: 2, module: 'geometry' },
+  tables: { en: 'Read Tables', si: 'වගු කියවීම', difficulty: 2, module: 'data' },
+  picto: { en: 'Picture Graphs', si: 'පින්තූර ප්‍රස්තාර', difficulty: 3, module: 'data' },
 };
 
 export { MATH_ACTIVITIES };

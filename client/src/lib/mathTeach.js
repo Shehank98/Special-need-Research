@@ -71,4 +71,65 @@ export const TEACH = {
   assessment: [
     { visual: { type: 'emoji', value: '📝', count: 1 }, en: 'This is a quiz to see what you know. Try your best — take your time!', si: 'මෙය ඔබ දන්නා දේ බැලීමට ප්‍රශ්නාවලියකි. උපරිමය උත්සාහ කරන්න — හදිසි නැත!' },
   ],
+
+  // ---- Numbers extras ----
+  read_write: [
+    { visual: { type: 'expr', value: '2000 + 300 + 40 + 5' }, en: 'We can build a number from its parts. This makes 2,345.', si: 'සංඛ්‍යාවක් කොටස් වලින් සෑදිය හැක. මෙය 2,345 වේ.' },
+  ],
+  order: [
+    { visual: { type: 'expr', value: '231 < 312 < 540' }, en: 'To order numbers, compare the biggest place first.', si: 'සංඛ්‍යා පිළිවෙළට, මුලින් විශාලම ස්ථානය සසඳන්න.' },
+  ],
+  patterns: [
+    { visual: { type: 'expr', value: '2, 4, 6, 8, …' }, en: 'A pattern follows a rule. Here we add 2 each time.', si: 'රටාවක් නීතියක් අනුගමනය කරයි. මෙහි සෑම විටම 2ක් එකතු වේ.' },
+  ],
+  multiples: [
+    { visual: { type: 'groups', rows: 2, cols: 5, emoji: '🔵' }, en: 'Multiples of 5 are 5, 10, 15, 20… counting in fives.', si: '5 හි ගුණාකාර 5, 10, 15, 20… පහ බැගින් ගණන් කිරීම.' },
+  ],
+  roman: [
+    { visual: { type: 'expr', value: 'I=1  V=5  X=10' }, en: 'Roman numerals use letters. IV means 4, IX means 9.', si: 'රෝම ඉලක්කම් අකුරු භාවිතා කරයි. IV යනු 4, IX යනු 9.' },
+  ],
+
+  // ---- Measurement extras ----
+  capacity: [
+    { visual: { type: 'emoji', value: '🥤', count: 1 }, en: 'Capacity is how much a container holds. 1 litre = 1000 millilitres.', si: 'ධාරිතාව යනු බඳුනක රඳවන ප්‍රමාණයයි. ලීටර් 1 = මිලිලීටර් 1000.' },
+  ],
+  length: [
+    { visual: { type: 'emoji', value: '📏', count: 1 }, en: 'We measure length in cm and m. 1 metre = 100 centimetres.', si: 'දිග අපි සෙ.මී. සහ මී. වලින් මනිමු. මීටර් 1 = සෙන්ටිමීටර් 100.' },
+  ],
+  weight: [
+    { visual: { type: 'emoji', value: '⚖️', count: 1 }, en: 'Weight is how heavy something is. 1 kilogram = 1000 grams.', si: 'බර යනු යමක කෙතරම් බරද යන්නයි. කිලෝ 1 = ග්‍රෑම් 1000.' },
+  ],
+  area: [
+    { visual: { type: 'grid', rows: 3, cols: 4 }, en: 'Area is the space inside a shape — count the squares.', si: 'වර්ගඵලය යනු හැඩයක් තුළ ඇති ඉඩයි — චතුරස්‍ර ගණන් කරන්න.' },
+  ],
+
+  // ---- Money extras ----
+  currency: [
+    { visual: { type: 'emoji', value: '💵', count: 1 }, en: 'We use rupee notes and coins. Add their values together.', si: 'අපි රුපියල් නෝට්ටු සහ කාසි භාවිතා කරමු. ඒවායේ අගය එකතු කරන්න.' },
+  ],
+  calc: [
+    { visual: { type: 'expr', value: 'Rs.35 + Rs.45 = Rs.80' }, en: 'Add the prices to find the total money.', si: 'මුළු මුදල සොයා ගැනීමට මිල එකතු කරන්න.' },
+  ],
+  receipts: [
+    { visual: { type: 'emoji', value: '🧾', count: 1 }, en: 'A bill adds up everything you buy. Add each price.', si: 'බිලක් ඔබ මිලදී ගන්නා සියල්ල එකතු කරයි. සෑම මිලක්ම එකතු කරන්න.' },
+  ],
+
+  // ---- Geometry extras ----
+  faces: [
+    { visual: { type: 'emoji', value: '🎲', count: 1 }, en: 'A cube has 6 faces, 8 corners and 12 edges.', si: 'ඝනකයකට මුහුණත් 6ක්, කොන් 8ක් සහ දාර 12ක් ඇත.' },
+  ],
+  angles: [
+    { visual: { type: 'angle', deg: 90 }, en: 'A right angle is a square corner — exactly 90 degrees.', si: 'සෘජු කෝණයක් යනු චතුරස්‍ර කොනකි — හරියටම අංශක 90ක්.' },
+  ],
+  directions: [
+    { visual: { type: 'compass', dir: 'N' }, en: 'North, East, South and West. North is up on a compass.', si: 'උතුර, නැගෙනහිර, දකුණ සහ බටහිර. මාලිමාවක උතුර ඉහළින්.' },
+  ],
+
+  // ---- Data extras ----
+  tables: [
+    { visual: { type: 'emoji', value: '📋', count: 1 }, en: 'A table shows information in rows. Read across to find the number.', si: 'වගුවක් තොරතුරු පේළිවල පෙන්වයි. අංකය සොයා ගැනීමට හරහා කියවන්න.' },
+  ],
+  picto: [
+    { visual: { type: 'emoji', value: '⭐', count: 3 }, en: 'In a picture graph each symbol stands for an amount. Multiply!', si: 'පින්තූර ප්‍රස්තාරයක එක් සංකේතයක් ප්‍රමාණයක් නියෝජනය කරයි. ගුණ කරන්න!' },
+  ],
 };
