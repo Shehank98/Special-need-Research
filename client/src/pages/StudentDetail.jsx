@@ -62,6 +62,32 @@ export default function StudentDetail() {
     }
   }
 
+  function exportCsv() {
+    const esc = (v) => {
+      const x = v == null ? '' : String(v);
+      return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x;
+    };
+    const lines = [];
+    const sn = data.student.anon_code || data.student.name || id;
+    lines.push(`Student,${esc(sn)}`);
+    lines.push(`Group,${esc(data.student.study_group || '')}`);
+    lines.push(`Difficulty,${esc(data.student.difficulty_type || '')}`);
+    lines.push(`Completed,${data.totals.completed},Avg score,${data.totals.avg_score},Total time (s),${data.totals.total_time}`);
+    lines.push('');
+    lines.push('activity,level,score,attempts,time_spent_seconds');
+    data.math.forEach((m) => lines.push(`${esc(m.activity)},${m.level},${m.score},${m.attempts},${m.time_spent_seconds}`));
+    lines.push('');
+    lines.push('rating_date,attention,participation,frustration,notes');
+    data.ratings.forEach((r) => lines.push(`${esc(new Date(r.created_at).toISOString())},${r.attention_1to5},${r.participation_1to5},${r.frustration_1to5},${esc(r.notes)}`));
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `student_${sn}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (error) return <Layout><p className="card text-center">{error}</p></Layout>;
   if (!data) return <Layout><p className="text-center text-xl">{lang === 'si' ? 'පූරණය…' : 'Loading…'}</p></Layout>;
 
@@ -75,7 +101,10 @@ export default function StudentDetail() {
   return (
     <Layout>
       <div className="space-y-5">
-        <button onClick={() => navigate('/teacher')} className="font-semibold text-sky-600">⬅️ {lang === 'si' ? 'සිසුන්' : 'All students'}</button>
+        <div className="flex items-center justify-between">
+          <button onClick={() => navigate('/teacher')} className="font-semibold text-sky-600">⬅️ {lang === 'si' ? 'සිසුන්' : 'All students'}</button>
+          <button onClick={exportCsv} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow">⬇️ {lang === 'si' ? 'CSV බාගන්න' : 'Export CSV'}</button>
+        </div>
 
         {/* Header */}
         <div className="rounded-3xl bg-gradient-to-r from-indigo-500 to-sky-500 p-5 text-white shadow">

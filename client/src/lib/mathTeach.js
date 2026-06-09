@@ -48,6 +48,9 @@ export const TEACH = {
     { visual: { type: 'clock', h: 3, m: 15 }, en: 'The long hand shows the minutes. This is quarter past 3.', si: 'දිගු කටුව මිනිත්තු පෙන්වයි. මෙය 3:15 යි.' },
     { try: { prompt_en: 'What time is this?', prompt_si: 'මෙය කුමන වේලාවද?', visual: { type: 'clock', h: 6, m: 0 }, options: [{ text: '6:00', correct: true }, { text: '3:00', correct: false }, { text: '9:00', correct: false }] } },
   ],
+  set_clock: [
+    { visual: { type: 'clock', h: 7, m: 30 }, en: 'Now you set the clock! Drag the long blue hand to the minutes, tap a number for the hour.', si: 'දැන් ඔබ ඔරලෝසුව සකසන්න! නිල් කටුව මිනිත්තු වෙත ඇද දමා, පැය සඳහා අංකයක් තට්ටු කරන්න.' },
+  ],
   fractions: [
     { visual: { type: 'fractionBar', parts: 4, shaded: 1 }, en: 'A fraction is part of a whole. 1 part out of 4 is one quarter.', si: 'භාගයක් යනු සම්පූර්ණයකින් කොටසකි. 4න් කොටස් 1ක් යනු කාලකි.' },
     { visual: { type: 'fraction', top: 1, bottom: 4 }, en: 'Top number = shaded parts. Bottom number = total parts.', si: 'ඉහළ ඉලක්කම = වර්ණ කළ කොටස්. පහළ ඉලක්කම = මුළු කොටස්.' },

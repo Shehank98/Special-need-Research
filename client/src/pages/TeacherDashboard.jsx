@@ -78,6 +78,9 @@ export default function TeacherDashboard() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-bold">👩‍🏫 {t('teacherDashboard')}</h1>
           <div className="flex flex-wrap gap-2">
+            <button onClick={() => navigate('/teacher/overview')} className="btn-soft">
+              🗺️ {lang === 'si' ? 'පන්ති දළ විශ්ලේෂණය' : 'Class overview'}
+            </button>
             <button onClick={() => navigate('/teacher/lessons')} className="btn-soft">
               📚 {t('manageLessons')}
             </button>

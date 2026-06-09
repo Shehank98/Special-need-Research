@@ -320,4 +320,26 @@ router.post('/rating', async (req, res) => {
   }
 });
 
+// GET /api/teacher/matrix -> every student's maths score per activity/level,
+// for the class-wide heatmap overview.
+router.get('/matrix', async (_req, res) => {
+  try {
+    const rows = await query(
+      `SELECT u.id AS student_id,
+              COALESCE(u.anon_code, u.name) AS name,
+              l.content->>'activity' AS activity,
+              COALESCE((l.content->>'level')::int, 1) AS level,
+              p.score
+       FROM users u
+       JOIN progress p ON p.student_id = u.id
+       JOIN lessons l ON l.id = p.lesson_id
+       WHERE u.role = 'student' AND l.type = 'math'`
+    );
+    res.json(rows.rows);
+  } catch (err) {
+    console.error('matrix error:', err.message);
+    res.status(500).json({ error: 'Failed to load matrix' });
+  }
+});
+
 export default router;

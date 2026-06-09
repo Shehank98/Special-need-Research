@@ -13,6 +13,7 @@ import Subtraction from './Subtraction.jsx';
 import TimesTables from './TimesTables.jsx';
 import Division from './Division.jsx';
 import Clock from './Clock.jsx';
+import SetClock from './SetClock.jsx';
 import Fractions from './Fractions.jsx';
 import Shapes from './Shapes.jsx';
 import Shop from './Shop.jsx';
@@ -28,6 +29,7 @@ const REGISTRY = {
   times_tables: TimesTables,
   division: Division,
   clock: Clock,
+  set_clock: SetClock,
   fractions: Fractions,
   shapes: Shapes,
   shop: Shop,

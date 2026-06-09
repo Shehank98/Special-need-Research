@@ -107,6 +107,7 @@ export const api = {
   awardBadge: (payload) => request('/api/badges', { method: 'POST', body: payload }),
   teacherStudents: () => request('/api/teacher/students'),
   teacherStudent: (id) => request(`/api/teacher/student/${id}`),
+  teacherMatrix: () => request('/api/teacher/matrix'),
   teacherRate: (payload) => request('/api/teacher/rating', { method: 'POST', body: payload }),
   teacherReport: () => request('/api/teacher/report'),
   teacherReportCsvUrl: `${BASE}/api/teacher/report?format=csv`,

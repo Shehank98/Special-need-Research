@@ -15,6 +15,7 @@ const MATH_ACTIVITIES = {
   times_tables: { en: 'Multiplication Tables', si: 'ගුණන වගු', difficulty: 3, module: 'arithmetic' },
   division: { en: 'Division', si: 'බෙදීම', difficulty: 3, module: 'arithmetic' },
   clock: { en: 'Telling the Time', si: 'වේලාව කීම', difficulty: 2, module: 'measurement' },
+  set_clock: { en: 'Set the Clock', si: 'ඔරලෝසුව සකසන්න', difficulty: 3, module: 'measurement' },
   fractions: { en: 'Fractions', si: 'භාග', difficulty: 3, module: 'numbers' },
   shapes: { en: 'Shapes', si: 'හැඩතල', difficulty: 2, module: 'geometry' },
   shop: { en: 'Virtual Shop', si: 'අතථ්‍ය වෙළඳසැල', difficulty: 3, module: 'money' },

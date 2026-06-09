@@ -43,6 +43,7 @@ export const MATH_MODULES = [
     accent: 'text-amber-700',
     topics: [
       { id: 'time', en: 'Telling the Time', si: 'වේලාව කීම', activity: 'clock' },
+      { id: 'set-time', en: 'Set the Clock', si: 'ඔරලෝසුව සකසන්න', activity: 'set_clock' },
       { id: 'capacity', en: 'Capacity (L & ml)', si: 'ධාරිතාව', activity: 'capacity' },
       { id: 'length', en: 'Length (cm & m)', si: 'දිග', activity: 'length' },
       { id: 'weight', en: 'Weight (g & kg)', si: 'බර', activity: 'weight' },
