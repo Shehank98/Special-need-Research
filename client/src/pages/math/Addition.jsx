@@ -3,13 +3,15 @@ import { useLanguage } from '../../context/LanguageContext.jsx';
 import MathResult from '../../components/math/MathResult.jsx';
 
 const TOTAL = 5;
-// Generate an addition that requires carrying at least once.
-function makeSum() {
+// Generate an addition that requires carrying. Level scales the digit size.
+function makeSum(level = 1) {
+  const lo = level >= 3 ? 1000 : level === 2 ? 100 : 10;
+  const hi = level >= 3 ? 9000 : level === 2 ? 900 : 90;
   let a;
   let b;
   do {
-    a = 100 + Math.floor(Math.random() * 800);
-    b = 100 + Math.floor(Math.random() * 800);
+    a = lo + Math.floor(Math.random() * hi);
+    b = lo + Math.floor(Math.random() * hi);
   } while (!hasCarry(a, b));
   return { a, b, sum: a + b };
 }
@@ -30,7 +32,7 @@ function cells(n, cols) {
   return s.split('');
 }
 
-export default function Addition({ onHome, activityId }) {
+export default function Addition({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -39,7 +41,7 @@ export default function Addition({ onHome, activityId }) {
   const [checked, setChecked] = useState(false);
   const startRef = useRef(Date.now());
 
-  const q = useMemo(() => makeSum(), [round]);
+  const q = useMemo(() => makeSum(level), [round, level]);
   const cols = String(q.sum).length;
   const answer = String(q.sum).padStart(cols, '0');
 
@@ -70,7 +72,7 @@ export default function Addition({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   const aCells = cells(q.a, cols);

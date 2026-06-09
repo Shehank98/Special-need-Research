@@ -102,6 +102,7 @@ export const api = {
       body: { session_id: s?.id ?? null, week_number: s?.week_number ?? null, ...payload },
     });
   },
+  mathProgress: () => request('/api/math/progress'),
   badges: (studentId) => request(`/api/badges/${studentId}`),
   awardBadge: (payload) => request('/api/badges', { method: 'POST', body: payload }),
   teacherStudents: () => request('/api/teacher/students'),

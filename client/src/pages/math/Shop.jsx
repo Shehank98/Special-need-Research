@@ -14,7 +14,7 @@ const ITEMS = [
 ];
 const PAID = [50, 100, 200];
 
-export default function Shop({ onHome, activityId }) {
+export default function Shop({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -23,8 +23,9 @@ export default function Shop({ onHome, activityId }) {
   const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
+    const paidPool = level >= 3 ? [100, 200, 500] : level === 2 ? [50, 100, 200] : [20, 50, 100];
     const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
-    const paid = PAID[Math.floor(Math.random() * PAID.length)];
+    const paid = paidPool[Math.floor(Math.random() * paidPool.length)];
     const price = 10 + Math.floor(Math.random() * (paid - 10)); // < paid
     const change = paid - price;
     const opts = new Set([change]);
@@ -34,7 +35,7 @@ export default function Shop({ onHome, activityId }) {
       if (cand >= 0 && cand <= paid) opts.add(cand);
     }
     return { item, paid, price, change, options: shuffle([...opts]) };
-  }, [round]);
+  }, [round, level]);
 
   function pick(v) {
     if (feedback) return;
@@ -53,7 +54,7 @@ export default function Shop({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   const itemName = lang === 'si' ? q.item.si : q.item.en;

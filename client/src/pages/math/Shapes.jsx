@@ -28,7 +28,7 @@ function ShapeSvg({ id }) {
   );
 }
 
-export default function Shapes({ onHome, activityId }) {
+export default function Shapes({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -37,12 +37,14 @@ export default function Shapes({ onHome, activityId }) {
   const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
-    const target = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    // More shapes in the pool = harder to tell apart.
+    const pool = SHAPES.slice(0, level >= 3 ? SHAPES.length : level === 2 ? 4 : 3);
+    const target = pool[Math.floor(Math.random() * pool.length)];
     const opts = new Set([target.id]);
-    while (opts.size < 3) opts.add(SHAPES[Math.floor(Math.random() * SHAPES.length)].id);
+    while (opts.size < 3) opts.add(pool[Math.floor(Math.random() * pool.length)].id);
     const options = shuffle([...opts]).map((id) => SHAPES.find((s) => s.id === id));
     return { target, options };
-  }, [round]);
+  }, [round, level]);
 
   function pick(id) {
     if (feedback) return;
@@ -61,7 +63,7 @@ export default function Shapes({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   return (

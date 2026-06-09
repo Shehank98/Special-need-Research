@@ -4,7 +4,7 @@ import { useLanguage } from '../../context/LanguageContext.jsx';
 
 // Friendly end-of-activity screen with a star rating (1–3) by score.
 // If given an `activity`, it persists the result once (progress + events).
-export default function MathResult({ activity, score, correct, total, timeSpentSeconds = 0, onAgain, onHome }) {
+export default function MathResult({ activity, level = 1, score, correct, total, timeSpentSeconds = 0, onAgain, onHome, onSaved }) {
   const { t, lang } = useLanguage();
   const stars = score >= 85 ? 3 : score >= 60 ? 2 : 1;
   const sent = useRef(false);
@@ -13,10 +13,11 @@ export default function MathResult({ activity, score, correct, total, timeSpentS
     if (activity && !sent.current) {
       sent.current = true;
       api
-        .mathResult({ activity, score, correct, total, time_spent_seconds: timeSpentSeconds })
+        .mathResult({ activity, level, score, correct, total, time_spent_seconds: timeSpentSeconds })
+        .then(() => onSaved && onSaved())
         .catch(() => {});
     }
-  }, [activity, score, correct, total, timeSpentSeconds]);
+  }, [activity, level, score, correct, total, timeSpentSeconds, onSaved]);
 
   return (
     <div className="mx-auto max-w-md space-y-5 rounded-3xl bg-white p-8 text-center shadow-lg">

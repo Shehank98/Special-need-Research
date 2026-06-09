@@ -27,7 +27,7 @@ function FractionBar({ parts, shaded }) {
   );
 }
 
-export default function Fractions({ onHome, activityId }) {
+export default function Fractions({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -36,17 +36,18 @@ export default function Fractions({ onHome, activityId }) {
   const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
-    const parts = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
+    const POOL = level >= 3 ? [2, 3, 4, 5, 6, 8] : level === 2 ? [2, 3, 4, 5, 6] : [2, 3, 4];
+    const parts = POOL[Math.floor(Math.random() * POOL.length)];
     const shaded = 1 + Math.floor(Math.random() * (parts - 1));
     const ans = `${shaded}/${parts}`;
     const opts = new Set([ans]);
     while (opts.size < 3) {
-      const p = [2, 3, 4, 5, 6][Math.floor(Math.random() * 5)];
+      const p = POOL[Math.floor(Math.random() * POOL.length)];
       const s = 1 + Math.floor(Math.random() * (p - 1));
       opts.add(`${s}/${p}`);
     }
     return { parts, shaded, ans, options: shuffle([...opts]) };
-  }, [round]);
+  }, [round, level]);
 
   function pick(v) {
     if (feedback) return;
@@ -65,7 +66,7 @@ export default function Fractions({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   return (

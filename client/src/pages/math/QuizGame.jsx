@@ -6,7 +6,7 @@ import MathResult from '../../components/math/MathResult.jsx';
 
 // Generic MCQ activity engine. `generate()` returns:
 //   { prompt_en, prompt_si, visual?, options:[{ text?|en?|si?, correct }] }
-export default function QuizGame({ activityId, generate, rounds = 6 }) {
+export default function QuizGame({ activityId, generate, level = 1, rounds = 6, onFinish }) {
   const { lang } = useLanguage();
   const { speak } = useTTS();
   const [round, setRound] = useState(0);
@@ -15,7 +15,7 @@ export default function QuizGame({ activityId, generate, rounds = 6 }) {
   const [done, setDone] = useState(false);
   const startRef = useRef(Date.now());
 
-  const q = useMemo(() => generate(), [round, generate]);
+  const q = useMemo(() => generate(level), [round, generate, level]);
   const prompt = lang === 'si' ? q.prompt_si : q.prompt_en;
   const label = (o) => (lang === 'si' && o.si ? o.si : o.text ?? o.en);
 
@@ -43,12 +43,14 @@ export default function QuizGame({ activityId, generate, rounds = 6 }) {
     return (
       <MathResult
         activity={activityId}
+        level={level}
         score={Math.round((correct / rounds) * 100)}
         correct={correct}
         total={rounds}
         timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)}
         onAgain={restart}
         onHome={() => {}}
+        onSaved={onFinish}
       />
     );
   }

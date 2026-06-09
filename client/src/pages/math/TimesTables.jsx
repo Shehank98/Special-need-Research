@@ -7,7 +7,7 @@ const TABLES = [2, 3, 4, 5, 6, 8, 10];
 const TOTAL = 8;
 const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
 
-export default function TimesTables({ onHome, activityId }) {
+export default function TimesTables({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const { speak } = useTTS();
   const [table, setTable] = useState(null); // null = pick screen; 'mixed' or a number
@@ -20,7 +20,8 @@ export default function TimesTables({ onHome, activityId }) {
   const q = useMemo(() => {
     if (table == null) return null;
     const base = table === 'mixed' ? TABLES[Math.floor(Math.random() * TABLES.length)] : table;
-    const other = 1 + Math.floor(Math.random() * 10);
+    const otherMax = level >= 3 ? 12 : level === 2 ? 10 : 5; // bigger factor = harder
+    const other = 1 + Math.floor(Math.random() * otherMax);
     const ans = base * other;
     const opts = new Set([ans]);
     while (opts.size < 3) {
@@ -29,7 +30,7 @@ export default function TimesTables({ onHome, activityId }) {
       if (cand > 0) opts.add(cand);
     }
     return { base, other, ans, options: shuffle([...opts]) };
-  }, [table, round]);
+  }, [table, round, level]);
 
   function pick(v) {
     if (feedback) return;
@@ -70,7 +71,7 @@ export default function TimesTables({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   return (

@@ -5,7 +5,7 @@ import MathResult from '../../components/math/MathResult.jsx';
 const TOTAL = 5;
 const DIVISORS = [2, 3, 4, 5];
 
-export default function Division({ onHome, activityId }) {
+export default function Division({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -17,11 +17,13 @@ export default function Division({ onHome, activityId }) {
 
   const q = useMemo(() => {
     const divisor = DIVISORS[Math.floor(Math.random() * DIVISORS.length)];
-    const quotient = 2 + Math.floor(Math.random() * 8);
-    const remainder = Math.floor(Math.random() * divisor); // 0..divisor-1
+    const qMax = level >= 3 ? 20 : level === 2 ? 12 : 6; // bigger quotient = harder
+    const quotient = 2 + Math.floor(Math.random() * qMax);
+    // Level 1 has no remainder; harder levels do.
+    const remainder = level === 1 ? 0 : Math.floor(Math.random() * divisor);
     const dividend = divisor * quotient + remainder;
     return { divisor, quotient, remainder, dividend };
-  }, [round]);
+  }, [round, level]);
 
   function check() {
     const ok = Number(qIn) === q.quotient && Number(rIn || 0) === q.remainder;
@@ -40,7 +42,7 @@ export default function Division({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   const ok = checked && Number(qIn) === q.quotient && Number(rIn || 0) === q.remainder;

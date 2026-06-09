@@ -40,7 +40,7 @@ function AnalogClock({ hour, minute }) {
   );
 }
 
-export default function Clock({ onHome, activityId }) {
+export default function Clock({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -49,17 +49,19 @@ export default function Clock({ onHome, activityId }) {
   const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
+    // Level scales minute precision: o'clock/half -> quarters -> 5-minutes.
+    const mins = level >= 3 ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55] : level === 2 ? [0, 15, 30, 45] : [0, 30];
     const hour = 1 + Math.floor(Math.random() * 12);
-    const minute = MINUTES[Math.floor(Math.random() * MINUTES.length)];
+    const minute = mins[Math.floor(Math.random() * mins.length)];
     const ans = fmt(hour, minute);
     const opts = new Set([ans]);
     while (opts.size < 3) {
       const h = 1 + Math.floor(Math.random() * 12);
-      const m = MINUTES[Math.floor(Math.random() * MINUTES.length)];
+      const m = mins[Math.floor(Math.random() * mins.length)];
       opts.add(fmt(h, m));
     }
     return { hour, minute, ans, options: shuffle([...opts]) };
-  }, [round]);
+  }, [round, level]);
 
   function pick(v) {
     if (feedback) return;
@@ -79,7 +81,7 @@ export default function Clock({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   return (

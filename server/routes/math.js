@@ -42,36 +42,37 @@ const MATH_ACTIVITIES = {
 
 export { MATH_ACTIVITIES };
 
-// Find or create the lessons row backing a maths activity.
-async function ensureMathLesson(activity) {
+// Find or create the lessons row backing a maths activity at a difficulty level.
+async function ensureMathLesson(activity, level) {
   const meta = MATH_ACTIVITIES[activity];
   const found = await query(
-    "SELECT id FROM lessons WHERE type = 'math' AND content->>'activity' = $1 LIMIT 1",
-    [activity]
+    "SELECT id FROM lessons WHERE type = 'math' AND content->>'activity' = $1 AND content->>'level' = $2 LIMIT 1",
+    [activity, String(level)]
   );
   if (found.rows.length > 0) return found.rows[0].id;
   const inserted = await query(
     `INSERT INTO lessons (title_en, title_si, type, category, difficulty, content)
      VALUES ($1, $2, 'math', 'dyscalculia', $3, $4) RETURNING id`,
-    [meta.en, meta.si, meta.difficulty, JSON.stringify({ activity, module: meta.module })]
+    [`${meta.en} (Lv ${level})`, `${meta.si} (මට්ටම ${level})`, Math.min(5, level + 1), JSON.stringify({ activity, level, module: meta.module })]
   );
   return inserted.rows[0].id;
 }
 
-// POST /api/math/result -> record a completed maths activity for the student.
-// Body: { activity, score, time_spent_seconds?, correct?, total?, session_id?, week_number? }
+// POST /api/math/result -> record a completed maths activity level for the student.
+// Body: { activity, level?, score, time_spent_seconds?, correct?, total?, session_id?, week_number? }
 router.post('/result', requireAuth, async (req, res) => {
   try {
-    const { activity, score = 0, time_spent_seconds = 0, correct = null, total = null } = req.body || {};
+    const { activity, level = 1, score = 0, time_spent_seconds = 0, correct = null, total = null } = req.body || {};
     if (!MATH_ACTIVITIES[activity]) {
       return res.status(400).json({ error: 'Unknown maths activity' });
     }
     const studentId = req.user.role === 'student' ? req.user.id : req.body.student_id;
     if (!studentId) return res.status(400).json({ error: 'student_id required' });
 
+    const safeLevel = Math.max(1, Math.min(3, Math.round(Number(level) || 1)));
     const safeScore = Math.max(0, Math.min(100, Math.round(Number(score) || 0)));
     const safeTime = Math.max(0, Math.min(86400, Math.round(Number(time_spent_seconds) || 0)));
-    const lessonId = await ensureMathLesson(activity);
+    const lessonId = await ensureMathLesson(activity, safeLevel);
 
     // Upsert progress (one row per student+lesson).
     const existing = await query(
@@ -105,7 +106,7 @@ router.post('/result', requireAuth, async (req, res) => {
       `INSERT INTO engagement_events
          (student_id, session_id, event_type, activity_type, metric_name, metric_value, week_number, metadata)
        VALUES ($1, $2, 'lesson_completed', $3, 'score', $4, $5, $6)`,
-      [studentId, sessionId, activity, safeScore, week, JSON.stringify({ correct, total, module: MATH_ACTIVITIES[activity].module })]
+      [studentId, sessionId, activity, safeScore, week, JSON.stringify({ correct, total, level: safeLevel, module: MATH_ACTIVITIES[activity].module })]
     );
     if (safeTime > 0) {
       await query(
@@ -118,10 +119,33 @@ router.post('/result', requireAuth, async (req, res) => {
 
     const newBadges = await evaluateBadges(studentId, { score: safeScore, timeSpent: safeTime, usedHint: false });
 
-    res.status(201).json({ ok: true, lesson_id: lessonId, progress, new_badges: newBadges });
+    res.status(201).json({ ok: true, lesson_id: lessonId, level: safeLevel, progress, new_badges: newBadges });
   } catch (err) {
     console.error('math result error:', err.message);
     res.status(500).json({ error: 'Failed to record maths result' });
+  }
+});
+
+// GET /api/math/progress -> the student's per-activity, per-level best scores.
+// Powers the roadmap (stars/unlocks). Students see their own; teachers can pass
+// ?student_id=.
+router.get('/progress', requireAuth, async (req, res) => {
+  try {
+    const studentId = req.user.role === 'student' ? req.user.id : req.query.student_id;
+    if (!studentId) return res.status(400).json({ error: 'student_id required' });
+    const rows = await query(
+      `SELECT l.content->>'activity' AS activity,
+              COALESCE((l.content->>'level')::int, 1) AS level,
+              p.score, p.completed, p.attempts
+       FROM progress p
+       JOIN lessons l ON l.id = p.lesson_id
+       WHERE p.student_id = $1 AND l.type = 'math'`,
+      [studentId]
+    );
+    res.json(rows.rows);
+  } catch (err) {
+    console.error('math progress error:', err.message);
+    res.status(500).json({ error: 'Failed to load maths progress' });
   }
 });
 

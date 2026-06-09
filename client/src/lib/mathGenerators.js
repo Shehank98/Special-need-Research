@@ -1,4 +1,5 @@
-// Question generators for the simpler MCQ-based maths topics. Each returns
+// Question generators for the MCQ-based maths topics. Each takes a difficulty
+// `level` (1=easy, 2=medium, 3=hard) and returns
 // { prompt_en, prompt_si, visual?, options:[{ text?|en?|si?, correct }] }.
 
 const r = (n) => Math.floor(Math.random() * n);
@@ -23,26 +24,28 @@ const DIRS = {
 
 export const GENERATORS = {
   // ---- Numbers ----
-  read_write() {
+  read_write(level = 1) {
     const th = 1 + r(9); const h = r(10); const t = r(10); const o = r(10);
     const n = th * 1000 + h * 100 + t * 10 + o;
     const expanded = `${th * 1000} + ${h * 100} + ${t * 10} + ${o}`;
-    return { prompt_en: `Which number is this?  ${expanded}`, prompt_si: `මෙය කුමන සංඛ්‍යාවද?  ${expanded}`, options: shuffle([{ text: String(n), correct: true }, { text: String(n + 100), correct: false }, { text: String(n + 10), correct: false }]) };
+    // harder = closer distractors
+    const near = level >= 3 ? [n + 1, n - 1] : level === 2 ? [n + 10, n - 10] : [n + 100, n - 100];
+    return { prompt_en: `Which number is this?  ${expanded}`, prompt_si: `මෙය කුමන සංඛ්‍යාවද?  ${expanded}`, options: shuffle([{ text: String(n), correct: true }, { text: String(near[0]), correct: false }, { text: String(near[1]), correct: false }]) };
   },
-  order() {
-    const nums = shuffle([1, 2, 3].map(() => 1000 + r(9000)));
+  order(level = 1) {
+    const max = [999, 4999, 9999][level - 1] || 9999;
+    const nums = shuffle([1, 2, 3].map(() => 100 + r(max)));
     const askBig = r(2) === 0;
     const target = askBig ? Math.max(...nums) : Math.min(...nums);
     return { prompt_en: askBig ? 'Which is the biggest?' : 'Which is the smallest?', prompt_si: askBig ? 'විශාලම කුමක්ද?' : 'කුඩාම කුමක්ද?', options: nums.map((v) => ({ text: String(v), correct: v === target })) };
   },
-  patterns() {
-    const start = 1 + r(6); const step = pickOne([2, 3, 5, 10]);
+  patterns(level = 1) {
+    const start = 1 + r(6); const step = [2, 5, 25][level - 1] || pickOne([2, 3, 5]);
     const seq = [start, start + step, start + 2 * step, start + 3 * step];
-    const next = start + 4 * step;
-    return { prompt_en: `What comes next?  ${seq.join(', ')}, ?`, prompt_si: `ඊළඟට කුමක්ද?  ${seq.join(', ')}, ?`, options: numOpts(next, step) };
+    return { prompt_en: `What comes next?  ${seq.join(', ')}, ?`, prompt_si: `ඊළඟට කුමක්ද?  ${seq.join(', ')}, ?`, options: numOpts(start + 4 * step, step) };
   },
-  multiples() {
-    const base = pickOne([2, 3, 4, 5, 10]);
+  multiples(level = 1) {
+    const base = [2, 4, 8][level - 1] || pickOne([2, 3, 4, 5]);
     const correct = base * (2 + r(8));
     const opts = new Set([correct]);
     while (opts.size < 3) {
@@ -51,10 +54,10 @@ export const GENERATORS = {
     }
     return { prompt_en: `Which is a multiple of ${base}?`, prompt_si: `${base} හි ගුණාකාරය කුමක්ද?`, options: shuffle([...opts]).map((v) => ({ text: String(v), correct: v === correct })) };
   },
-  roman() {
-    const n = 1 + r(12);
-    const asRoman = r(2) === 0;
-    if (asRoman) {
+  roman(level = 1) {
+    const max = [5, 10, 12][level - 1] || 12;
+    const n = 1 + r(max);
+    if (r(2) === 0) {
       const correct = ROMAN[n - 1];
       const opts = new Set([correct]);
       while (opts.size < 3) opts.add(ROMAN[r(12)]);
@@ -76,26 +79,30 @@ export const GENERATORS = {
     if (r(2) === 0) return { prompt_en: '1 kilogram = ? grams', prompt_si: 'කිලෝග්‍රෑම් 1 = ? ග්‍රෑම්', options: shuffle([{ text: '1000', correct: true }, { text: '100', correct: false }, { text: '500', correct: false }]) };
     return { prompt_en: 'Which is heavier?', prompt_si: 'බරම කුමක්ද?', options: shuffle([{ text: '2 kg', correct: true }, { text: '1500 g', correct: false }]) };
   },
-  area() {
-    const rows = 2 + r(4); const cols = 2 + r(4);
+  area(level = 1) {
+    const span = [3, 5, 7][level - 1] || 4;
+    const rows = 2 + r(span); const cols = 2 + r(span);
     return { prompt_en: 'How many squares? (the area)', prompt_si: 'චතුරස්‍ර කීයද? (වර්ගඵලය)', visual: { type: 'grid', rows, cols }, options: numOpts(rows * cols, 4) };
   },
 
   // ---- Money ----
-  currency() {
+  currency(level = 1) {
     if (r(2) === 0) {
-      const a = pickOne([10, 20, 50]); const b = pickOne([10, 20, 50]);
+      const notes = level >= 3 ? [20, 50, 100] : level === 2 ? [10, 20, 50] : [5, 10, 20];
+      const a = pickOne(notes); const b = pickOne(notes);
       return { prompt_en: `Rs.${a} + Rs.${b} = ?`, prompt_si: `රු.${a} + රු.${b} = ?`, options: numOpts(a + b, 20, (v) => `Rs. ${v}`) };
     }
     const coin = pickOne([5, 10]); const total = coin * (3 + r(5));
     return { prompt_en: `How many Rs.${coin} coins make Rs.${total}?`, prompt_si: `රු.${total} සෑදීමට රු.${coin} කාසි කීයද?`, options: numOpts(total / coin, 3) };
   },
-  calc() {
-    const a = 20 + r(60); const b = 20 + r(60);
+  calc(level = 1) {
+    const mag = [40, 90, 200][level - 1] || 60;
+    const a = 20 + r(mag); const b = 20 + r(mag);
     return { prompt_en: `Rs.${a} + Rs.${b} = ?`, prompt_si: `රු.${a} + රු.${b} = ?`, options: numOpts(a + b, 15, (v) => `Rs. ${v}`) };
   },
-  receipts() {
-    const x = 20 + r(40); const y = 20 + r(40);
+  receipts(level = 1) {
+    const mag = [30, 60, 100][level - 1] || 40;
+    const x = 20 + r(mag); const y = 20 + r(mag);
     return { prompt_en: `Apple Rs.${x} + Bread Rs.${y}. Total bill?`, prompt_si: `ඇපල් රු.${x} + පාන් රු.${y}. මුළු බිල?`, options: numOpts(x + y, 15, (v) => `Rs. ${v}`) };
   },
 
@@ -118,13 +125,14 @@ export const GENERATORS = {
   },
 
   // ---- Data handling ----
-  tables() {
-    const cats = 2 + r(7); const dogs = 2 + r(7); const birds = 2 + r(7);
+  tables(level = 1) {
+    const mag = [7, 12, 20][level - 1] || 7;
+    const cats = 2 + r(mag); const dogs = 2 + r(mag); const birds = 2 + r(mag);
     const which = pickOne([['dogs', 'බල්ලන්', dogs], ['cats', 'පූසන්', cats], ['birds', 'කුරුල්ලන්', birds]]);
     return { prompt_en: `Cats: ${cats}, Dogs: ${dogs}, Birds: ${birds}. How many ${which[0]}?`, prompt_si: `පූසන්: ${cats}, බල්ලන්: ${dogs}, කුරුල්ලන්: ${birds}. ${which[1]} කීයද?`, options: numOpts(which[2], 3) };
   },
-  picto() {
-    const each = pickOne([2, 5]); const count = 2 + r(4);
+  picto(level = 1) {
+    const each = [2, 5, 10][level - 1] || 2; const count = 2 + r(4);
     const sym = '⭐';
     return { prompt_en: `Each ${sym} = ${each}. There are ${count} ${sym}. How many in total?`, prompt_si: `එක් ${sym} = ${each}. ${sym} ${count}ක් ඇත. මුළු කීයද?`, options: numOpts(each * count, 4) };
   },

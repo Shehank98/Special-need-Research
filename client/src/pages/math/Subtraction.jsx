@@ -11,18 +11,20 @@ function needsBorrow(a, b) {
   }
   return false;
 }
-function makeDiff() {
+function makeDiff(level = 1) {
+  const base = level >= 3 ? 2000 : level === 2 ? 200 : 30;
+  const span = level >= 3 ? 7000 : level === 2 ? 700 : 60;
   let a;
   let b;
   do {
-    a = 200 + Math.floor(Math.random() * 799);
-    b = 100 + Math.floor(Math.random() * (a - 100));
-  } while (!needsBorrow(a, b));
+    a = base + Math.floor(Math.random() * span);
+    b = Math.floor(base / 2) + Math.floor(Math.random() * (a - Math.floor(base / 2)));
+  } while (!needsBorrow(a, b) || b >= a);
   return { a, b, diff: a - b };
 }
 const cells = (n, cols) => String(n).padStart(cols, ' ').split('');
 
-export default function Subtraction({ onHome, activityId }) {
+export default function Subtraction({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -31,7 +33,7 @@ export default function Subtraction({ onHome, activityId }) {
   const [checked, setChecked] = useState(false);
   const startRef = useRef(Date.now());
 
-  const q = useMemo(() => makeDiff(), [round]);
+  const q = useMemo(() => makeDiff(level), [round, level]);
   const cols = String(q.a).length;
   const answer = String(q.diff).padStart(cols, '0');
 
@@ -60,7 +62,7 @@ export default function Subtraction({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   const aCells = cells(q.a, cols);

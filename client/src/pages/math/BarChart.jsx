@@ -12,7 +12,7 @@ const CATS = [
 ];
 const COLORS = ['#38bdf8', '#34d399', '#fbbf24', '#f472b6'];
 
-export default function BarChart({ onHome, activityId }) {
+export default function BarChart({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -21,7 +21,8 @@ export default function BarChart({ onHome, activityId }) {
   const startRef = useRef(Date.now());
 
   const q = useMemo(() => {
-    const data = CATS.map((c) => ({ ...c, value: 1 + Math.floor(Math.random() * 10) }));
+    const maxV = level >= 3 ? 20 : level === 2 ? 12 : 6;
+    const data = CATS.map((c) => ({ ...c, value: 1 + Math.floor(Math.random() * maxV) }));
     // Ask either "how many X" or "which has the most".
     const askMost = Math.random() < 0.4;
     let prompt;
@@ -44,7 +45,7 @@ export default function BarChart({ onHome, activityId }) {
       options = shuffle([...opts]).map(String);
     }
     return { data, prompt, ans, options, askMost };
-  }, [round]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [round, level]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function pick(v) {
     if (feedback) return;
@@ -63,7 +64,7 @@ export default function BarChart({ onHome, activityId }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
   }
 
   const maxV = Math.max(...q.data.map((d) => d.value));

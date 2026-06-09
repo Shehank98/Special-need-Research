@@ -13,7 +13,7 @@ const TOTAL = 6;
 const randNum = () => 1000 + Math.floor(Math.random() * 9000); // 1000–9999
 
 // Tap the digit that sits in the named place value.
-export default function PlaceValue({ onHome, activityId }) {
+export default function PlaceValue({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const { speak } = useTTS();
   const [round, setRound] = useState(0);
@@ -57,12 +57,14 @@ export default function PlaceValue({ onHome, activityId }) {
     return (
       <MathResult
         activity={activityId}
+        level={level}
         score={Math.round((correct / TOTAL) * 100)}
         correct={correct}
         total={TOTAL}
         timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)}
         onAgain={restart}
         onHome={onHome}
+        onSaved={onFinish}
       />
     );
   }
@@ -93,12 +95,14 @@ export default function PlaceValue({ onHome, activityId }) {
         ))}
       </div>
 
-      {/* place labels under digits help build the concept */}
-      <div className="flex justify-center gap-3 text-center text-xs text-slate-400">
-        {PLACES.map((p) => (
-          <span key={p.key} className="w-20">{lang === 'si' ? p.si : p.en}</span>
-        ))}
-      </div>
+      {/* place labels help at Level 1; removed at higher levels for challenge */}
+      {level === 1 && (
+        <div className="flex justify-center gap-3 text-center text-xs text-slate-400">
+          {PLACES.map((p) => (
+            <span key={p.key} className="w-20">{lang === 'si' ? p.si : p.en}</span>
+          ))}
+        </div>
+      )}
 
       {feedback && (
         <p className={`mx-auto w-fit rounded-full px-5 py-2 text-lg font-bold ${feedback === 'correct' ? 'bg-emerald-200' : 'bg-rose-200'}`}>
