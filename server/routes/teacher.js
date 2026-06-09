@@ -228,4 +228,96 @@ router.post('/assign', async (req, res) => {
   }
 });
 
+// GET /api/teacher/student/:id -> full per-child detail (maths levels, engagement,
+// mood trend, badges, sessions, teacher ratings).
+router.get('/student/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const userRes = await query(
+      `SELECT id, name, anon_code, role, language, grade, age, study_group, difficulty_type, created_at
+       FROM users WHERE id = $1 AND role = 'student'`,
+      [id]
+    );
+    if (userRes.rows.length === 0) return res.status(404).json({ error: 'Student not found' });
+
+    const [mathRes, totalsRes, engRes, moodRes, badgeRes, sessRes, ratingRes] = await Promise.all([
+      query(
+        `SELECT l.content->>'activity' AS activity,
+                COALESCE((l.content->>'level')::int, 1) AS level,
+                l.content->>'module' AS module,
+                p.score, p.completed, p.attempts, p.time_spent_seconds, p.completed_at
+         FROM progress p JOIN lessons l ON l.id = p.lesson_id
+         WHERE p.student_id = $1 AND l.type = 'math'`,
+        [id]
+      ),
+      query(
+        `SELECT COUNT(*) FILTER (WHERE completed)::int AS completed,
+                COALESCE(ROUND(AVG(score) FILTER (WHERE completed)), 0)::int AS avg_score,
+                COALESCE(SUM(time_spent_seconds), 0)::int AS total_time
+         FROM progress WHERE student_id = $1`,
+        [id]
+      ),
+      query(
+        `SELECT event_type, COUNT(*)::int AS n FROM engagement_events
+         WHERE student_id = $1 GROUP BY event_type`,
+        [id]
+      ),
+      query(
+        `SELECT metric_name, metric_value, created_at FROM engagement_events
+         WHERE student_id = $1 AND metric_name IN ('mood_start','mood_end')
+         ORDER BY created_at DESC LIMIT 14`,
+        [id]
+      ),
+      query('SELECT badge_type, earned_at FROM badges WHERE student_id = $1 ORDER BY earned_at DESC', [id]),
+      query(
+        `SELECT COUNT(DISTINCT session_date)::int AS login_days,
+                MAX(session_date) AS last_active,
+                COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (COALESCE(logout_time, login_time) - login_time))) / 60), 0)::int AS minutes
+         FROM study_sessions WHERE student_id = $1`,
+        [id]
+      ),
+      query(
+        `SELECT attention_1to5, participation_1to5, frustration_1to5, notes, created_at
+         FROM teacher_ratings WHERE student_id = $1 ORDER BY created_at DESC LIMIT 20`,
+        [id]
+      ),
+    ]);
+
+    const eng = {};
+    engRes.rows.forEach((r) => { eng[r.event_type] = r.n; });
+
+    res.json({
+      student: userRes.rows[0],
+      math: mathRes.rows,
+      totals: totalsRes.rows[0],
+      engagement: eng,
+      mood: moodRes.rows,
+      badges: badgeRes.rows,
+      sessions: sessRes.rows[0],
+      ratings: ratingRes.rows,
+    });
+  } catch (err) {
+    console.error('student detail error:', err.message);
+    res.status(500).json({ error: 'Failed to load student detail' });
+  }
+});
+
+// POST /api/teacher/rating -> save a rubric rating for a student (both groups).
+router.post('/rating', async (req, res) => {
+  try {
+    const { student_id, attention_1to5, participation_1to5, frustration_1to5, notes = '', session_id = null } = req.body || {};
+    if (!student_id) return res.status(400).json({ error: 'student_id required' });
+    const clamp = (v) => (v == null ? null : Math.max(1, Math.min(5, Math.round(Number(v)))));
+    const result = await query(
+      `INSERT INTO teacher_ratings (student_id, session_id, attention_1to5, participation_1to5, frustration_1to5, notes, rated_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [student_id, session_id, clamp(attention_1to5), clamp(participation_1to5), clamp(frustration_1to5), String(notes).slice(0, 1000), req.user.id]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('rating error:', err.message);
+    res.status(500).json({ error: 'Failed to save rating' });
+  }
+});
+
 export default router;

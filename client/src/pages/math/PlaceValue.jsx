@@ -4,111 +4,123 @@ import { useTTS } from '../../hooks/useTTS.js';
 import MathResult from '../../components/math/MathResult.jsx';
 
 const PLACES = [
-  { key: 'thousands', en: 'thousands', si: 'දහස්' },
-  { key: 'hundreds', en: 'hundreds', si: 'සිය' },
-  { key: 'tens', en: 'tens', si: 'දස' },
-  { key: 'ones', en: 'ones', si: 'එක' },
+  { en: 'thousands', si: 'දහස්' },
+  { en: 'hundreds', si: 'සිය' },
+  { en: 'tens', si: 'දස' },
+  { en: 'ones', si: 'එක' },
 ];
-const TOTAL = 6;
-const randNum = () => 1000 + Math.floor(Math.random() * 9000); // 1000–9999
+const PLACES5 = [{ en: 'ten-thousands', si: 'දස දහස්' }, ...PLACES];
+const TOTAL = 5;
 
-// Tap the digit that sits in the named place value.
+// Drag-and-drop (or tap) place-value builder: drag digit tiles into the place
+// boxes to build the target number.
 export default function PlaceValue({ onHome, activityId, level = 1, onFinish }) {
   const { lang } = useLanguage();
   const { speak } = useTTS();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [feedback, setFeedback] = useState(null);
   const [done, setDone] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [slots, setSlots] = useState([]); // placed digit per box (string|null)
+  const [selected, setSelected] = useState(null); // tap-to-place selection
   const startRef = useRef(Date.now());
 
-  const q = useMemo(() => {
-    const n = randNum();
-    const placeIdx = Math.floor(Math.random() * 4);
-    return { n, digits: String(n).split(''), placeIdx };
-  }, [round]); // eslint-disable-line react-hooks/exhaustive-deps
+  const target = useMemo(() => {
+    const n = level >= 3 ? 10000 + Math.floor(Math.random() * 89999) : 1000 + Math.floor(Math.random() * 9000);
+    return String(n);
+  }, [round, level]);
+  const digits = target.split('');
+  const places = digits.length === 5 ? PLACES5 : PLACES;
 
-  const place = PLACES[q.placeIdx];
-
-  function pick(i) {
+  function place(i, digit) {
     if (feedback) return;
-    const ok = i === q.placeIdx;
-    setFeedback(ok ? 'correct' : 'wrong');
-    if (ok) {
-      setCorrect((c) => c + 1);
-      speak(lang === 'si' ? 'නිවැරදියි' : 'Correct', lang, { log: false });
+    const next = slots.length ? [...slots] : Array(digits.length).fill(null);
+    next[i] = digit;
+    setSelected(null);
+    setSlots(next);
+    if (next.every((d, k) => d === digits[k])) {
+      setFeedback('correct');
+      speak(lang === 'si' ? 'හරි!' : 'Yes!', lang, { log: false });
+      const c = correct + 1;
+      setCorrect(c);
+      setTimeout(() => {
+        setFeedback(null);
+        setSlots([]);
+        if (round + 1 >= TOTAL) setDone(true);
+        else setRound((r) => r + 1);
+      }, 1000);
+    } else if (next.every((d) => d !== null)) {
+      // all filled but wrong
+      setFeedback('wrong');
+      speak(lang === 'si' ? 'නැවත උත්සාහ කරන්න' : 'Try again', lang, { log: false });
+      setTimeout(() => { setFeedback(null); setSlots(Array(digits.length).fill(null)); }, 900);
     }
-    setTimeout(() => {
-      setFeedback(null);
-      if (round + 1 >= TOTAL) setDone(true);
-      else setRound((r) => r + 1);
-    }, 900);
   }
 
   function restart() {
-    setRound(0);
-    setCorrect(0);
-    setDone(false);
-    setFeedback(null);
+    setRound(0); setCorrect(0); setDone(false); setFeedback(null); setSlots([]); setSelected(null);
     startRef.current = Date.now();
   }
 
   if (done) {
     return (
-      <MathResult
-        activity={activityId}
-        level={level}
-        score={Math.round((correct / TOTAL) * 100)}
-        correct={correct}
-        total={TOTAL}
-        timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)}
-        onAgain={restart}
-        onHome={onHome}
-        onSaved={onFinish}
-      />
+      <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />
     );
   }
+
+  const slot = (i) => (slots.length ? slots[i] : null);
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-sky-50 p-4 text-center">
-        <p className="text-xl font-semibold">
-          {lang === 'si'
-            ? `${place.si} ස්ථානයේ ඉලක්කම තට්ටු කරන්න`
-            : `Tap the digit in the ${place.en} place`}
-        </p>
+        <p className="text-lg font-semibold">{lang === 'si' ? 'මෙම සංඛ්‍යාව සාදන්න' : 'Build this number'}</p>
+        <p className="text-5xl font-bold tracking-widest text-sky-700">{Number(target).toLocaleString()}</p>
       </div>
 
+      {/* Place boxes (drop targets) */}
       <div className="flex justify-center gap-3">
-        {q.digits.map((d, i) => (
-          <button
-            key={i}
-            onClick={() => pick(i)}
-            className={`flex h-24 w-20 items-center justify-center rounded-2xl text-5xl font-bold shadow transition active:scale-95 ${
-              feedback && i === q.placeIdx
-                ? 'bg-emerald-200'
-                : 'bg-white hover:bg-sky-50'
-            }`}
-          >
-            {d}
-          </button>
+        {digits.map((_, i) => (
+          <div key={i} className="flex flex-col items-center gap-1">
+            <div
+              onClick={() => (slot(i) ? place(i, null) : selected != null && place(i, selected))}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); place(i, e.dataTransfer.getData('text/plain')); }}
+              className={`flex h-20 w-16 items-center justify-center rounded-2xl border-4 border-dashed text-4xl font-bold transition ${
+                slot(i) != null ? 'border-sky-400 bg-white' : 'border-slate-300 bg-slate-50'
+              } ${feedback === 'correct' ? 'border-emerald-400 bg-emerald-50' : feedback === 'wrong' ? 'border-rose-400 bg-rose-50' : ''}`}
+            >
+              {slot(i) ?? ''}
+            </div>
+            {level === 1 && <span className="w-16 text-center text-[10px] text-slate-400">{lang === 'si' ? places[i].si : places[i].en}</span>}
+          </div>
         ))}
       </div>
 
-      {/* place labels help at Level 1; removed at higher levels for challenge */}
-      {level === 1 && (
-        <div className="flex justify-center gap-3 text-center text-xs text-slate-400">
-          {PLACES.map((p) => (
-            <span key={p.key} className="w-20">{lang === 'si' ? p.si : p.en}</span>
-          ))}
-        </div>
-      )}
-
       {feedback && (
         <p className={`mx-auto w-fit rounded-full px-5 py-2 text-lg font-bold ${feedback === 'correct' ? 'bg-emerald-200' : 'bg-rose-200'}`}>
-          {feedback === 'correct' ? (lang === 'si' ? '✅ නිවැරදියි' : '✅ Correct') : (lang === 'si' ? '🔄 නැවත' : '🔄 Try again')}
+          {feedback === 'correct' ? (lang === 'si' ? '✅ හරි!' : '✅ Correct!') : (lang === 'si' ? '🔄 නැවත' : '🔄 Try again')}
         </p>
       )}
+
+      {/* Digit tiles (draggable / tappable) */}
+      <div>
+        <p className="mb-2 text-center text-sm text-slate-400">{lang === 'si' ? 'ඉලක්කම් ඇද දමන්න හෝ තට්ටු කරන්න' : 'Drag a digit into a box (or tap a digit then a box)'}</p>
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-2">
+          {Array.from({ length: 10 }).map((_, d) => (
+            <button
+              key={d}
+              draggable
+              onDragStart={(e) => e.dataTransfer.setData('text/plain', String(d))}
+              onClick={() => setSelected(String(d))}
+              className={`h-14 rounded-xl text-2xl font-bold shadow transition active:scale-95 ${
+                selected === String(d) ? 'bg-sky-500 text-white ring-4 ring-sky-300' : 'bg-pastel-yellow'
+              }`}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <p className="text-center text-slate-400">{round + 1} / {TOTAL}</p>
     </div>

@@ -11,6 +11,7 @@ import WritingActivity from './pages/WritingActivity.jsx';
 import Badges from './pages/Badges.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import LessonManager from './pages/LessonManager.jsx';
+import StudentDetail from './pages/StudentDetail.jsx';
 import MathHome from './pages/math/MathHome.jsx';
 import MathModule from './pages/math/MathModule.jsx';
 import MathActivity from './pages/math/MathActivity.jsx';
@@ -126,6 +127,14 @@ export default function App() {
         element={
           <ProtectedRoute role="teacher">
             <LessonManager />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teacher/student/:id"
+        element={
+          <ProtectedRoute role="teacher">
+            <StudentDetail />
           </ProtectedRoute>
         }
       />

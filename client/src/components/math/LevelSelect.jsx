@@ -11,12 +11,22 @@ const COLORS = {
 export default function LevelSelect({ activity, map, onPick }) {
   const { lang } = useLanguage();
   const statuses = levelStatus(map, activity);
+  // Adaptive: recommend the first unlocked level not yet passed (else the last).
+  const rec = statuses.find((s) => s.unlocked && !s.passed) || statuses[statuses.length - 1];
 
   return (
     <div className="space-y-5">
       <p className="text-center text-lg font-bold text-slate-600">
         {lang === 'si' ? 'මට්ටම තෝරන්න' : 'Choose your level'}
       </p>
+
+      {/* Adaptive recommendation */}
+      <button
+        onClick={() => onPick(rec.level)}
+        className="mx-auto flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg animate-bounce-in active:scale-95"
+      >
+        ⭐ {lang === 'si' ? `නිර්දේශිතය: මට්ටම ${rec.level}` : `Recommended: Level ${rec.level}`} ▶️
+      </button>
       <div className="space-y-4">
         {statuses.map((s) => {
           const label = LEVEL_LABEL[s.level][lang === 'si' ? 'si' : 'en'];
@@ -31,7 +41,7 @@ export default function LevelSelect({ activity, map, onPick }) {
                 locked
                   ? 'cursor-not-allowed bg-slate-100'
                   : `bg-gradient-to-r ${COLORS[s.level]} text-white hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99]`
-              }`}
+              } ${!locked && s.level === rec.level ? 'ring-4 ring-sky-300' : ''}`}
             >
               <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-bold ${locked ? 'bg-slate-200 text-slate-400' : 'bg-white/30'}`}>
                 {locked ? '🔒' : s.level}

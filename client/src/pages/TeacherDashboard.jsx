@@ -129,8 +129,12 @@ export default function TeacherDashboard() {
             </thead>
             <tbody>
               {sorted.map((r) => (
-                <tr key={r.student_id} className={`border-b border-pastel-purple/40 ${r.needs_attention ? 'bg-pastel-pink/40' : ''}`}>
-                  <td className="p-2 font-semibold">{r.name}</td>
+                <tr
+                  key={r.student_id}
+                  onClick={() => navigate(`/teacher/student/${r.student_id}`)}
+                  className={`cursor-pointer border-b border-pastel-purple/40 hover:bg-sky-50 ${r.needs_attention ? 'bg-pastel-pink/40' : ''}`}
+                >
+                  <td className="p-2 font-semibold text-sky-700 underline">{r.name}</td>
                   <td className="p-2">{r.grade ?? '—'}</td>
                   {cats.map((c) => {
                     const cat = r.categories?.[c] || { done: 0, avg_score: 0 };

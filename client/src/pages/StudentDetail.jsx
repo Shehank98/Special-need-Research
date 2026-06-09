@@ -1,0 +1,210 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { api } from '../api.js';
+import { useLanguage } from '../context/LanguageContext.jsx';
+import Layout from '../components/Layout.jsx';
+import { MATH_MODULES } from '../lib/mathSyllabus.js';
+import { starsFor } from '../lib/mathLevels.js';
+
+const MOOD_FACE = ['', '😢', '🙁', '😐', '🙂', '😄'];
+
+// Score → cell colour.
+function cell(score) {
+  if (score == null) return 'text-slate-300';
+  if (score < 60) return 'text-rose-600 font-bold';
+  if (score < 85) return 'text-amber-600 font-semibold';
+  return 'text-emerald-600 font-semibold';
+}
+
+export default function StudentDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  const [rating, setRating] = useState({ attention_1to5: 3, participation_1to5: 3, frustration_1to5: 2, notes: '' });
+  const [saved, setSaved] = useState(false);
+
+  function load() {
+    api.teacherStudent(id).then(setData).catch((e) => setError(e.message));
+  }
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
+
+  // Map activity -> { 1:score, 2:score, 3:score } for the level grid.
+  const byActivity = useMemo(() => {
+    const m = {};
+    (data?.math || []).forEach((r) => {
+      m[r.activity] = m[r.activity] || {};
+      m[r.activity][r.level] = r.score;
+    });
+    return m;
+  }, [data]);
+
+  // All maths topics from the syllabus (activity ids) grouped by module.
+  const moduleTopics = useMemo(
+    () => MATH_MODULES.map((mod) => ({
+      ...mod,
+      topics: mod.topics.filter((t) => t.activity && t.activity !== 'assessment'),
+    })).filter((mod) => mod.topics.length),
+    []
+  );
+
+  async function submitRating(e) {
+    e.preventDefault();
+    try {
+      await api.teacherRate({ student_id: id, ...rating });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+      setRating({ attention_1to5: 3, participation_1to5: 3, frustration_1to5: 2, notes: '' });
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  if (error) return <Layout><p className="card text-center">{error}</p></Layout>;
+  if (!data) return <Layout><p className="text-center text-xl">{lang === 'si' ? 'පූරණය…' : 'Loading…'}</p></Layout>;
+
+  const s = data.student;
+  const name = s.anon_code || s.name || '—';
+  const totalStars = Object.values(byActivity).reduce(
+    (sum, lv) => sum + [1, 2, 3].reduce((a, l) => a + (lv[l] != null ? starsFor(lv[l]) : 0), 0),
+    0
+  );
+
+  return (
+    <Layout>
+      <div className="space-y-5">
+        <button onClick={() => navigate('/teacher')} className="font-semibold text-sky-600">⬅️ {lang === 'si' ? 'සිසුන්' : 'All students'}</button>
+
+        {/* Header */}
+        <div className="rounded-3xl bg-gradient-to-r from-indigo-500 to-sky-500 p-5 text-white shadow">
+          <h1 className="text-3xl font-bold">🧒 {name}</h1>
+          <p className="mt-1 text-sm opacity-90">
+            {s.study_group ? `${s.study_group} · ` : ''}{s.difficulty_type || '—'}{s.grade ? ` · Grade ${s.grade}` : ''}{s.age ? ` · age ${s.age}` : ''}
+          </p>
+        </div>
+
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ['✅', data.totals.completed, lang === 'si' ? 'සම්පූර්ණ' : 'Completed'],
+            ['📊', `${data.totals.avg_score}%`, lang === 'si' ? 'සාමාන්‍යය' : 'Avg score'],
+            ['⭐', totalStars, lang === 'si' ? 'තරු' : 'Stars'],
+            ['⏱️', `${Math.round((data.totals.total_time || 0) / 60)}m`, lang === 'si' ? 'කාලය' : 'Time'],
+          ].map(([icon, val, label]) => (
+            <div key={label} className="card text-center">
+              <div className="text-2xl">{icon}</div>
+              <p className="text-2xl font-bold">{val}</p>
+              <p className="text-xs text-slate-500">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Per-topic level grid */}
+        <div className="card overflow-x-auto">
+          <h2 className="mb-3 text-xl font-bold">{lang === 'si' ? 'මාතෘකා අනුව මට්ටම්' : 'Levels by topic'}</h2>
+          <table className="w-full min-w-[520px] text-left text-sm">
+            <thead>
+              <tr className="border-b-2 border-slate-200 text-slate-500">
+                <th className="p-2">{lang === 'si' ? 'මාතෘකාව' : 'Topic'}</th>
+                <th className="p-2 text-center">L1</th>
+                <th className="p-2 text-center">L2</th>
+                <th className="p-2 text-center">L3</th>
+                <th className="p-2 text-center">⭐</th>
+              </tr>
+            </thead>
+            <tbody>
+              {moduleTopics.map((mod) => (
+                <>
+                  <tr key={mod.id} className={`${mod.color}`}>
+                    <td colSpan={5} className={`p-1 px-2 text-xs font-bold ${mod.accent}`}>{mod.emoji} {lang === 'si' ? mod.si : mod.en}</td>
+                  </tr>
+                  {mod.topics.map((t) => {
+                    const lv = byActivity[t.activity] || {};
+                    const stars = [1, 2, 3].reduce((a, l) => a + (lv[l] != null ? starsFor(lv[l]) : 0), 0);
+                    return (
+                      <tr key={t.activity} className="border-b border-slate-100">
+                        <td className="p-2 font-semibold text-slate-700">{lang === 'si' ? t.si : t.en}</td>
+                        {[1, 2, 3].map((l) => (
+                          <td key={l} className={`p-2 text-center ${cell(lv[l] ?? null)}`}>{lv[l] != null ? `${lv[l]}%` : '–'}</td>
+                        ))}
+                        <td className="p-2 text-center text-amber-500">{stars}/9</td>
+                      </tr>
+                    );
+                  })}
+                </>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mood trend + engagement */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="card">
+            <h2 className="mb-2 text-lg font-bold">🙂 {lang === 'si' ? 'මනෝභාවය' : 'Mood trend'}</h2>
+            {data.mood.length === 0 ? (
+              <p className="text-sm text-slate-400">{lang === 'si' ? 'දත්ත නැත' : 'No data yet'}</p>
+            ) : (
+              <div className="flex flex-wrap gap-1 text-2xl">
+                {data.mood.slice().reverse().map((m, i) => <span key={i} title={m.metric_name}>{MOOD_FACE[m.metric_value] || '·'}</span>)}
+              </div>
+            )}
+          </div>
+          <div className="card">
+            <h2 className="mb-2 text-lg font-bold">⚡ {lang === 'si' ? 'සහභාගීත්වය' : 'Engagement'}</h2>
+            <ul className="space-y-1 text-sm text-slate-600">
+              <li>🔊 TTS: {data.engagement.tts_used || 0}</li>
+              <li>💡 {lang === 'si' ? 'ඉඟි' : 'Hints'}: {data.engagement.hint_used || 0}</li>
+              <li>📝 {lang === 'si' ? 'පිළිතුරු' : 'Answers'}: {data.engagement.quiz_answered || 0}</li>
+              <li>📅 {lang === 'si' ? 'පිවිසුම් දින' : 'Login days'}: {data.sessions.login_days || 0} · {data.sessions.minutes || 0}m</li>
+              <li>🏆 {lang === 'si' ? 'ලාංඡන' : 'Badges'}: {data.badges.length}</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Teacher rubric (same for both groups) */}
+        <div className="card space-y-3">
+          <h2 className="text-lg font-bold">👩‍🏫 {lang === 'si' ? 'ගුරු ඇගයීම' : 'Teacher rating'}</h2>
+          <form onSubmit={submitRating} className="space-y-3">
+            {[
+              ['attention_1to5', lang === 'si' ? 'අවධානය' : 'Attention'],
+              ['participation_1to5', lang === 'si' ? 'සහභාගීත්වය' : 'Participation'],
+              ['frustration_1to5', lang === 'si' ? 'කලකිරීම' : 'Frustration'],
+            ].map(([key, label]) => (
+              <label key={key} className="flex items-center justify-between gap-3">
+                <span className="font-semibold text-slate-600">{label}</span>
+                <span className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button key={n} type="button" onClick={() => setRating((r) => ({ ...r, [key]: n }))}
+                      className={`h-9 w-9 rounded-full font-bold ${rating[key] === n ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      {n}
+                    </button>
+                  ))}
+                </span>
+              </label>
+            ))}
+            <textarea value={rating.notes} onChange={(e) => setRating((r) => ({ ...r, notes: e.target.value }))}
+              placeholder={lang === 'si' ? 'සටහන්…' : 'Notes…'} rows={2}
+              className="w-full rounded-xl border-2 border-slate-200 p-2 text-sm" />
+            <button type="submit" className="btn-primary">{saved ? '✅' : ''} {lang === 'si' ? 'ඇගයීම සුරකින්න' : 'Save rating'}</button>
+          </form>
+
+          {data.ratings.length > 0 && (
+            <div className="space-y-1 border-t pt-2 text-sm text-slate-600">
+              {data.ratings.slice(0, 5).map((r, i) => (
+                <div key={i} className="flex flex-wrap gap-3">
+                  <span>📅 {new Date(r.created_at).toLocaleDateString()}</span>
+                  <span>👁️ {r.attention_1to5}</span>
+                  <span>🙋 {r.participation_1to5}</span>
+                  <span>😤 {r.frustration_1to5}</span>
+                  {r.notes && <span className="italic">“{r.notes}”</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+}
