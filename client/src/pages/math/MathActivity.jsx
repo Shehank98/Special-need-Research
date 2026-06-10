@@ -93,7 +93,7 @@ export default function MathActivity() {
           Activity ? (
             <Activity onHome={onHome} activityId={activityId} level={level} onFinish={onFinish} />
           ) : (
-            <QuizGame activityId={activityId} generate={generator} level={level} onFinish={onFinish} />
+            <QuizGame activityId={activityId} generate={generator} level={level} onFinish={onFinish} onHome={onHome} />
           )
         )}
       </div>

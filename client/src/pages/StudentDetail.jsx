@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Fragment } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -145,8 +145,8 @@ export default function StudentDetail() {
             </thead>
             <tbody>
               {moduleTopics.map((mod) => (
-                <>
-                  <tr key={mod.id} className={`${mod.color}`}>
+                <Fragment key={mod.id}>
+                  <tr className={`${mod.color}`}>
                     <td colSpan={5} className={`p-1 px-2 text-xs font-bold ${mod.accent}`}>{mod.emoji} {lang === 'si' ? mod.si : mod.en}</td>
                   </tr>
                   {mod.topics.map((t) => {
@@ -162,7 +162,7 @@ export default function StudentDetail() {
                       </tr>
                     );
                   })}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
