@@ -28,7 +28,7 @@ function ShapeSvg({ id }) {
   );
 }
 
-export default function Shapes({ onHome, activityId, level = 1, onFinish }) {
+export default function Shapes({ onHome, activityId, level = 1, onFinish, onNextLevel }) {
   const { lang } = useLanguage();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -63,7 +63,7 @@ export default function Shapes({ onHome, activityId, level = 1, onFinish }) {
   }
 
   if (done) {
-    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />;
+    return <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onNext={onNextLevel} onSaved={onFinish} />;
   }
 
   return (

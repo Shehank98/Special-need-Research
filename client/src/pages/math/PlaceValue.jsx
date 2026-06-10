@@ -14,7 +14,7 @@ const TOTAL = 5;
 
 // Drag-and-drop (or tap) place-value builder: drag digit tiles into the place
 // boxes to build the target number.
-export default function PlaceValue({ onHome, activityId, level = 1, onFinish }) {
+export default function PlaceValue({ onHome, activityId, level = 1, onFinish, onNextLevel }) {
   const { lang } = useLanguage();
   const { speak } = useTTS();
   const [round, setRound] = useState(0);
@@ -64,7 +64,7 @@ export default function PlaceValue({ onHome, activityId, level = 1, onFinish }) 
 
   if (done) {
     return (
-      <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onSaved={onFinish} />
+      <MathResult activity={activityId} level={level} score={Math.round((correct / TOTAL) * 100)} correct={correct} total={TOTAL} timeSpentSeconds={Math.round((Date.now() - startRef.current) / 1000)} onAgain={restart} onHome={onHome} onNext={onNextLevel} onSaved={onFinish} />
     );
   }
 

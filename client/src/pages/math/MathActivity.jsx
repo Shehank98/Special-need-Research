@@ -52,6 +52,7 @@ export default function MathActivity() {
   const hasLevels = activityId !== 'assessment';
   const [phase, setPhase] = useState(teachSteps ? 'learn' : hasLevels ? 'levels' : 'play');
   const [level, setLevel] = useState(Number(params.get('level')) || 1);
+  const [playKey, setPlayKey] = useState(0); // bump to remount the game fresh
 
   if (!Activity && !generator) return <Navigate to="/home" replace />;
 
@@ -59,6 +60,11 @@ export default function MathActivity() {
   const onHome = () => navigate(info ? `/math/${info.module.id}` : '/home');
   // After a game finishes, refresh progress so stars/unlocks update.
   const onFinish = () => reload();
+  // Jump straight into the next level (skips learn/level-select), fresh game.
+  const onNextLevel = () => {
+    setLevel((l) => Math.min(3, l + 1));
+    setPlayKey((k) => k + 1);
+  };
 
   function afterLearn() {
     setPhase(hasLevels ? 'levels' : 'play');
@@ -91,9 +97,9 @@ export default function MathActivity() {
 
         {phase === 'play' && (
           Activity ? (
-            <Activity onHome={onHome} activityId={activityId} level={level} onFinish={onFinish} />
+            <Activity key={playKey} onHome={onHome} activityId={activityId} level={level} onFinish={onFinish} onNextLevel={onNextLevel} />
           ) : (
-            <QuizGame activityId={activityId} generate={generator} level={level} onFinish={onFinish} onHome={onHome} />
+            <QuizGame key={playKey} activityId={activityId} generate={generator} level={level} onFinish={onFinish} onHome={onHome} onNextLevel={onNextLevel} />
           )
         )}
       </div>
