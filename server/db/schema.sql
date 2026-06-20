@@ -148,3 +148,23 @@ CREATE TABLE IF NOT EXISTS tracing_attempts (
 CREATE INDEX IF NOT EXISTS idx_tracing_student ON tracing_attempts(student_id);
 CREATE INDEX IF NOT EXISTS idx_tracing_session ON tracing_attempts(session_id);
 CREATE INDEX IF NOT EXISTS idx_tracing_created ON tracing_attempts(created_at);
+
+-- question_responses: one row per answered question, for per-student response-time
+-- analytics (how long a specific child takes to answer, by activity/topic).
+CREATE TABLE IF NOT EXISTS question_responses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  session_id UUID REFERENCES study_sessions(id) ON DELETE SET NULL,
+  lesson_id UUID REFERENCES lessons(id) ON DELETE SET NULL,
+  activity_type VARCHAR(40),
+  question_index INT,
+  correct BOOLEAN,
+  used_hint BOOLEAN DEFAULT FALSE,
+  response_time_ms INT,
+  week_number INT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_qresp_student ON question_responses(student_id);
+CREATE INDEX IF NOT EXISTS idx_qresp_session ON question_responses(session_id);
+CREATE INDEX IF NOT EXISTS idx_qresp_activity ON question_responses(activity_type);
+CREATE INDEX IF NOT EXISTS idx_qresp_created ON question_responses(created_at);

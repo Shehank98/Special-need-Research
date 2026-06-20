@@ -29,11 +29,18 @@ export default function Quiz() {
   const [done, setDone] = useState(false);
   const [result, setResult] = useState(null);
   const startRef = useRef(Date.now());
+  const questionStartRef = useRef(Date.now());
 
   useEffect(() => {
     api.lesson(id).then(setLesson).catch(() => {});
     startRef.current = Date.now();
+    questionStartRef.current = Date.now();
   }, [id]);
+
+  // Reset the per-question timer whenever a new question is shown.
+  useEffect(() => {
+    questionStartRef.current = Date.now();
+  }, [step]);
 
   if (!lesson) return <Layout><p className="text-center text-xl">{t('loading')}</p></Layout>;
 
@@ -69,6 +76,7 @@ export default function Quiz() {
 
   function answer(option) {
     if (feedback) return;
+    const responseTimeMs = Date.now() - questionStartRef.current;
     api
       .logEvent({
         event_type: 'quiz_answered',
@@ -76,6 +84,16 @@ export default function Quiz() {
         metric_name: 'attempt',
         metric_value: option.correct ? 1 : 0,
         metadata: { lesson_id: id, correct: !!option.correct, step },
+      })
+      .catch(() => {});
+    api
+      .logResponse({
+        lesson_id: id,
+        activity_type: lesson.category,
+        question_index: step,
+        correct: !!option.correct,
+        used_hint: showHint,
+        response_time_ms: responseTimeMs,
       })
       .catch(() => {});
 

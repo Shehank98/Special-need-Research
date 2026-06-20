@@ -90,6 +90,17 @@ export const api = {
     return request('/api/events', { method: 'POST', body: enriched });
   },
   endSession: (sessionId) => request(`/api/sessions/${sessionId}/end`, { method: 'POST' }),
+  // Per-question response-time logging — auto-stamps the current session_id + week_number.
+  logResponse: (payload) => {
+    const s = getSession();
+    const enriched = {
+      session_id: s?.id ?? null,
+      week_number: s?.week_number ?? null,
+      ...payload,
+    };
+    return request('/api/responses', { method: 'POST', body: enriched });
+  },
+  responseSummary: (studentId) => request(`/api/responses/${studentId}/summary`),
   logTracing: (payload) => {
     const s = getSession();
     return request('/api/tracing', { method: 'POST', body: { session_id: s?.id ?? null, ...payload } });

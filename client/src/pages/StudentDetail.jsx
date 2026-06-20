@@ -168,6 +168,59 @@ export default function StudentDetail() {
           </table>
         </div>
 
+        {/* Response-time analytics: how long this student takes to answer */}
+        <div className="card">
+          <h2 className="mb-2 text-lg font-bold">⏱️ {lang === 'si' ? 'පිළිතුරු කාලය' : 'Response time'}</h2>
+          {!data.response_times || data.response_times.overall.n === 0 ? (
+            <p className="text-sm text-slate-400">{lang === 'si' ? 'දත්ත නැත' : 'No data yet'}</p>
+          ) : (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-xl font-bold">{(data.response_times.overall.avg_ms / 1000).toFixed(1)}s</p>
+                  <p className="text-xs text-slate-500">{lang === 'si' ? 'සාමාන්‍ය' : 'Average'}</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold">{(data.response_times.overall.median_ms / 1000).toFixed(1)}s</p>
+                  <p className="text-xs text-slate-500">{lang === 'si' ? 'මධ්‍යස්ථ' : 'Median'}</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold">{data.response_times.overall.n}</p>
+                  <p className="text-xs text-slate-500">{lang === 'si' ? 'පිළිතුරු' : 'Answers'}</p>
+                </div>
+              </div>
+              {data.response_times.trend?.first_avg_ms != null && data.response_times.trend?.recent_avg_ms != null && (
+                <p className="text-xs text-slate-500">
+                  {lang === 'si' ? 'මුල් 20' : 'First 20'}: {(data.response_times.trend.first_avg_ms / 1000).toFixed(1)}s →{' '}
+                  {lang === 'si' ? 'මෑත 20' : 'Recent 20'}: {(data.response_times.trend.recent_avg_ms / 1000).toFixed(1)}s
+                </p>
+              )}
+              {data.response_times.by_activity.length > 0 && (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500">
+                      <th className="p-1">{lang === 'si' ? 'ක්‍රියාකාරකම' : 'Activity'}</th>
+                      <th className="p-1 text-center">{lang === 'si' ? 'සාමාන්‍ය' : 'Avg'}</th>
+                      <th className="p-1 text-center">{lang === 'si' ? 'නිවැරදි' : 'Accuracy'}</th>
+                      <th className="p-1 text-center">n</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.response_times.by_activity.map((a) => (
+                      <tr key={a.activity_type} className="border-b border-slate-100">
+                        <td className="p-1 font-semibold text-slate-700">{a.activity_type}</td>
+                        <td className="p-1 text-center">{(a.avg_ms / 1000).toFixed(1)}s</td>
+                        <td className="p-1 text-center">{a.accuracy_pct != null ? `${a.accuracy_pct}%` : '–'}</td>
+                        <td className="p-1 text-center">{a.n}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Mood trend + engagement */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="card">

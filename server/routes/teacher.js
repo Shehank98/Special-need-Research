@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../db/pool.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { buildSummary as buildResponseSummary } from './responses.js';
 
 const router = express.Router();
 
@@ -101,6 +102,23 @@ async function buildReport() {
     console.warn('category breakdown unavailable (run migrations to enable):', err.message);
   }
 
+  // Average per-question response time (ms), for spotting students who take much
+  // longer to answer than the class. Resilient: skip if the table isn't migrated yet.
+  const avgResponseMs = {};
+  try {
+    const respRes = await query(`
+      SELECT student_id, ROUND(AVG(response_time_ms))::int AS avg_ms, COUNT(*)::int AS n
+      FROM question_responses GROUP BY student_id
+    `);
+    for (const r of respRes.rows) avgResponseMs[r.student_id] = { avg_ms: r.avg_ms, n: r.n };
+  } catch (err) {
+    console.warn('response-time breakdown unavailable (run migrations to enable):', err.message);
+  }
+  const classAvgMs = (() => {
+    const vals = Object.values(avgResponseMs).filter((v) => v.n >= 3).map((v) => v.avg_ms);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  })();
+
   // Attach category stats + compute fast-action attention flags per student.
   for (const row of rows) {
     const cats = {};
@@ -108,6 +126,10 @@ async function buildReport() {
       cats[c] = byStudent[row.student_id]?.[c] || { done: 0, avg_score: 0 };
     }
     row.categories = cats;
+
+    const resp = avgResponseMs[row.student_id] || { avg_ms: null, n: 0 };
+    row.avg_response_ms = resp.avg_ms;
+    row.response_count = resp.n;
 
     const flags = [];
     // Struggling: completed work in an area but averaging below 60%.
@@ -125,6 +147,10 @@ async function buildReport() {
     const hints = Number(row.hint_used);
     if (answered >= 3 && hints >= answered) {
       flags.push({ type: 'hint_reliant' });
+    }
+    // Taking noticeably longer per question than the class average.
+    if (resp.n >= 3 && classAvgMs && resp.avg_ms > classAvgMs * 1.5) {
+      flags.push({ type: 'slow_responder', value: resp.avg_ms });
     }
     // Inactive: no login in 3+ days (or never).
     let daysInactive = null;
@@ -161,6 +187,8 @@ router.get('/report', async (req, res) => {
         'badge_count',
         'login_days',
         'total_session_minutes',
+        'avg_response_ms',
+        'response_count',
         'days_inactive',
         'dyslexia_done',
         'dyslexia_avg',
@@ -240,7 +268,7 @@ router.get('/student/:id', async (req, res) => {
     );
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Student not found' });
 
-    const [mathRes, totalsRes, engRes, moodRes, badgeRes, sessRes, ratingRes] = await Promise.all([
+    const [mathRes, totalsRes, engRes, moodRes, badgeRes, sessRes, ratingRes, responseTimes] = await Promise.all([
       query(
         `SELECT l.content->>'activity' AS activity,
                 COALESCE((l.content->>'level')::int, 1) AS level,
@@ -281,6 +309,7 @@ router.get('/student/:id', async (req, res) => {
          FROM teacher_ratings WHERE student_id = $1 ORDER BY created_at DESC LIMIT 20`,
         [id]
       ),
+      buildResponseSummary(id),
     ]);
 
     const eng = {};
@@ -295,6 +324,7 @@ router.get('/student/:id', async (req, res) => {
       badges: badgeRes.rows,
       sessions: sessRes.rows[0],
       ratings: ratingRes.rows,
+      response_times: responseTimes,
     });
   } catch (err) {
     console.error('student detail error:', err.message);

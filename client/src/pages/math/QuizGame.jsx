@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import { useTTS } from '../../hooks/useTTS.js';
+import { api } from '../../api.js';
 import TeachVisual from '../../components/math/TeachVisual.jsx';
 import MathResult from '../../components/math/MathResult.jsx';
 
@@ -14,14 +15,28 @@ export default function QuizGame({ activityId, generate, level = 1, rounds = 6, 
   const [feedback, setFeedback] = useState(null);
   const [done, setDone] = useState(false);
   const startRef = useRef(Date.now());
+  const roundStartRef = useRef(Date.now());
 
   const q = useMemo(() => generate(level), [round, generate, level]);
   const prompt = lang === 'si' ? q.prompt_si : q.prompt_en;
   const label = (o) => (lang === 'si' && o.si ? o.si : o.text ?? o.en);
 
+  // Reset the per-question timer whenever a new round is shown.
+  useEffect(() => {
+    roundStartRef.current = Date.now();
+  }, [round]);
+
   function pick(o, i) {
     if (feedback) return;
     const ok = !!o.correct;
+    api
+      .logResponse({
+        activity_type: activityId,
+        question_index: round,
+        correct: ok,
+        response_time_ms: Date.now() - roundStartRef.current,
+      })
+      .catch(() => {});
     setFeedback(ok ? `ok:${i}` : `no:${i}`);
     if (ok) {
       setCorrect((c) => c + 1);
