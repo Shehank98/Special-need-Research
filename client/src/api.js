@@ -120,6 +120,8 @@ export const api = {
   teacherStudent: (id) => request(`/api/teacher/student/${id}`),
   teacherMatrix: () => request('/api/teacher/matrix'),
   teacherRate: (payload) => request('/api/teacher/rating', { method: 'POST', body: payload }),
+  // Assign/move a student to a research group ("path"): 'intervention' | 'control' | null.
+  teacherSetGroup: (payload) => request('/api/teacher/group', { method: 'POST', body: payload }),
   teacherReport: () => request('/api/teacher/report'),
   teacherReportCsvUrl: `${BASE}/api/teacher/report?format=csv`,
 };

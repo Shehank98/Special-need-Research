@@ -10,6 +10,8 @@ import SpellingGame from './pages/SpellingGame.jsx';
 import WritingActivity from './pages/WritingActivity.jsx';
 import Badges from './pages/Badges.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
+import GroupSelect from './pages/GroupSelect.jsx';
+import GroupStudents from './pages/GroupStudents.jsx';
 import LessonManager from './pages/LessonManager.jsx';
 import StudentDetail from './pages/StudentDetail.jsx';
 import ClassOverview from './pages/math/ClassOverview.jsx';
@@ -115,8 +117,25 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      {/* Teacher landing: choose a research group (path) first */}
       <Route
         path="/teacher"
+        element={
+          <ProtectedRoute role="teacher">
+            <GroupSelect />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teacher/group/:group"
+        element={
+          <ProtectedRoute role="teacher">
+            <GroupStudents />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teacher/dashboard"
         element={
           <ProtectedRoute role="teacher">
             <TeacherDashboard />

@@ -34,8 +34,10 @@ async function buildReport() {
     SELECT
       u.id AS student_id,
       u.name,
+      u.anon_code,
       u.grade,
       u.language,
+      u.study_group,
       COALESCE(p.lessons_completed, 0) AS lessons_completed,
       COALESCE(p.avg_score, 0) AS avg_score,
       COALESCE(p.total_time_seconds, 0) AS total_time_seconds,
@@ -178,6 +180,7 @@ router.get('/report', async (req, res) => {
         'name',
         'grade',
         'language',
+        'study_group',
         'lessons_completed',
         'avg_score',
         'total_time_seconds',
@@ -253,6 +256,32 @@ router.post('/assign', async (req, res) => {
   } catch (err) {
     console.error('assign error:', err.message);
     res.status(500).json({ error: 'Failed to assign lesson' });
+  }
+});
+
+// POST /api/teacher/group -> assign/move a student to a research group ("path").
+// Body: { student_id, study_group }  where study_group is 'intervention',
+// 'control', or null/'' to unassign. This is how a teacher sends each child
+// down one of the two paths.
+router.post('/group', async (req, res) => {
+  try {
+    const { student_id } = req.body || {};
+    if (!student_id) return res.status(400).json({ error: 'student_id required' });
+    const grp = req.body.study_group === '' ? null : req.body.study_group ?? null;
+    if (![null, 'intervention', 'control'].includes(grp)) {
+      return res.status(400).json({ error: "study_group must be 'intervention', 'control', or empty" });
+    }
+    const result = await query(
+      `UPDATE users SET study_group = $1
+       WHERE id = $2 AND role = 'student'
+       RETURNING id, name, anon_code, study_group`,
+      [grp, student_id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Student not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('set group error:', err.message);
+    res.status(500).json({ error: 'Failed to set group' });
   }
 });
 

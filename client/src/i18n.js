@@ -109,6 +109,33 @@ export const STRINGS = {
   reading: { en: 'Reading', si: 'කියවීම' },
   numbersSkill: { en: 'Numbers', si: 'ගණිතය' },
   spellingSkill: { en: 'Spelling', si: 'අක්ෂර' },
+  // Research groups (two-path study)
+  groups: { en: 'Groups', si: 'කණ්ඩායම්' },
+  chooseGroup: { en: 'Choose a group', si: 'කණ්ඩායමක් තෝරන්න' },
+  groupsIntro: {
+    en: 'Send each student down one of two paths.',
+    si: 'සෑම සිසුවෙකුම මාර්ග දෙකෙන් එකකට යවන්න.',
+  },
+  intervention: { en: 'Intervention', si: 'මැදිහත්වීම' },
+  control: { en: 'Control', si: 'පාලන කණ්ඩායම' },
+  unassigned: { en: 'Unassigned', si: 'නියම නොකළ' },
+  interventionDesc: {
+    en: 'Fun path — animations, badges, instant feedback',
+    si: 'විනෝද මාර්ගය — සජීවිකරණ, ලාංඡන, ක්ෂණික ප්‍රතිචාර',
+  },
+  controlDesc: {
+    en: 'Plain path — same lessons, no game elements',
+    si: 'සරල මාර්ගය — එම පාඩම්, ක්‍රීඩා අංග රහිත',
+  },
+  unassignedDesc: {
+    en: 'Not yet placed in a group',
+    si: 'තවම කණ්ඩායමකට යොදා නැත',
+  },
+  studentsCount: { en: 'students', si: 'සිසුන්' },
+  backToGroups: { en: 'Back to groups', si: 'කණ්ඩායම් වෙත' },
+  moveTo: { en: 'Move to', si: 'වෙත යවන්න' },
+  fullReport: { en: 'Full report', si: 'සම්පූර්ණ වාර්තාව' },
+  noStudentsInGroup: { en: 'No students in this group yet.', si: 'මෙම කණ්ඩායමේ තවම සිසුන් නැත.' },
   // Number/spelling editors
   count: { en: 'How many', si: 'කීයද' },
   answer: { en: 'Answer (number)', si: 'පිළිතුර (අංකය)' },
