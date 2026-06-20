@@ -11,6 +11,14 @@ import SpeakButton from '../components/SpeakButton.jsx';
 import Confetti from '../components/Confetti.jsx';
 import BadgeCard from '../components/BadgeCard.jsx';
 import Picture from '../components/Picture.jsx';
+import Encouragement from '../components/Encouragement.jsx';
+import {
+  randomPraise,
+  randomRetry,
+  randomCelebrateEmoji,
+  randomBuddyHappy,
+  randomBuddyCheer,
+} from '../lib/encouragement.js';
 
 export default function Quiz() {
   const { id } = useParams();
@@ -26,6 +34,8 @@ export default function Quiz() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'correct' | 'wrong'
+  const [cheer, setCheer] = useState(null); // { type, message, emoji, buddy } animated reaction
+  const [picked, setPicked] = useState(null); // index of the chosen option (for highlight)
   const [done, setDone] = useState(false);
   const [result, setResult] = useState(null);
   const startRef = useRef(Date.now());
@@ -74,7 +84,7 @@ export default function Quiz() {
     setDone(true);
   }
 
-  function answer(option) {
+  function answer(option, idx) {
     if (feedback) return;
     const responseTimeMs = Date.now() - questionStartRef.current;
     api
@@ -99,6 +109,8 @@ export default function Quiz() {
 
     const advance = (newCorrect) => {
       setShowHint(false);
+      setPicked(null);
+      setCheer(null);
       if (step < questions.length - 1) setStep((s) => s + 1);
       else finish(newCorrect, hintsUsed);
     };
@@ -111,19 +123,30 @@ export default function Quiz() {
       return;
     }
 
+    setPicked(idx);
+    // A fresh, varied, spoken reaction on every answer keeps kids engaged.
     if (option.correct) {
+      const msg = randomPraise(lang);
       setFeedback('correct');
-      speak(t('greatJob'), lang, { log: false });
+      setCheer({ type: 'correct', message: msg, emoji: randomCelebrateEmoji(), buddy: randomBuddyHappy() });
+      speak(msg, lang, { log: false });
       const newCorrect = correctCount + 1;
       setCorrectCount(newCorrect);
+      // Linger a little longer so the celebration is enjoyable.
       setTimeout(() => {
         setFeedback(null);
         advance(newCorrect);
-      }, 900);
+      }, 1300);
     } else {
+      const msg = randomRetry(lang);
       setFeedback('wrong');
-      speak(t('tryAgain'), lang, { log: false });
-      setTimeout(() => setFeedback(null), 900);
+      setCheer({ type: 'retry', message: msg, buddy: randomBuddyCheer() });
+      speak(msg, lang, { log: false });
+      setTimeout(() => {
+        setFeedback(null);
+        setCheer(null);
+        setPicked(null);
+      }, 1300);
     }
   }
 
@@ -163,6 +186,9 @@ export default function Quiz() {
 
   return (
     <Layout>
+      {cheer && exp.gamified && (
+        <Encouragement show type={cheer.type} message={cheer.message} emoji={cheer.emoji} buddy={cheer.buddy} />
+      )}
       <div className="space-y-5">
         <h1 className="text-2xl font-bold">{lang === 'si' ? lesson.title_si : lesson.title_en}</h1>
         {instructions && (
@@ -179,31 +205,31 @@ export default function Quiz() {
             <SpeakButton text={prompt} lang={lang} />
           </div>
 
-          {feedback && (
-            <p
-              className={`mx-auto w-fit rounded-full px-5 py-2 text-xl font-bold ${
-                feedback === 'correct' ? 'bg-pastel-green' : 'bg-pastel-pink'
-              }`}
-            >
-              {feedback === 'correct' ? `✅ ${t('correct')}` : `🔄 ${t('tryAgain')}`}
-            </p>
-          )}
-
-          {/* Picture answers */}
+          {/* Picture answers — big, tactile tap targets that react when chosen. */}
           <div className="grid grid-cols-3 gap-4">
-            {(q.options || []).map((opt, i) => (
-              <button
-                key={i}
-                onClick={() => answer(opt)}
-                className="btn h-auto flex-col gap-2 bg-white/70 py-5"
-                aria-label={lang === 'si' ? opt.label_si : opt.label_en}
-              >
-                <Picture emoji={opt.emoji} imageUrl={opt.image_url} alt={lang === 'si' ? opt.label_si : opt.label_en} size={80} />
-                <span className="text-base font-semibold">
-                  {lang === 'si' ? opt.label_si : opt.label_en}
-                </span>
-              </button>
-            ))}
+            {(q.options || []).map((opt, i) => {
+              const isPicked = picked === i;
+              const showState = isPicked && exp.instantFeedback;
+              const stateClass = showState
+                ? opt.correct
+                  ? 'bg-pastel-green ring-4 ring-emerald-300 animate-correct-pop'
+                  : 'bg-pastel-pink ring-4 ring-rose-300 animate-jiggle'
+                : 'bg-white/70 hover:scale-105';
+              return (
+                <button
+                  key={i}
+                  onClick={() => answer(opt, i)}
+                  disabled={!!feedback}
+                  className={`btn h-auto flex-col gap-2 py-5 transition ${stateClass}`}
+                  aria-label={lang === 'si' ? opt.label_si : opt.label_en}
+                >
+                  <Picture emoji={opt.emoji} imageUrl={opt.image_url} alt={lang === 'si' ? opt.label_si : opt.label_en} size={80} />
+                  <span className="text-base font-semibold">
+                    {lang === 'si' ? opt.label_si : opt.label_en}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {showHint && hint && (

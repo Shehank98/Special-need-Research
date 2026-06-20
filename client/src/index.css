@@ -116,3 +116,61 @@
   100% { transform: translate(0, -52px); opacity: 1; }
 }
 .animate-carry { animation: carry-up 1.6s ease-in-out infinite; }
+
+/* ---- Answer-reaction animations (encouragement overlay + answer buttons) ---- */
+
+/* Big celebratory pop for the encouragement bubble. */
+@keyframes pop-big {
+  0% { transform: scale(0.3); opacity: 0; }
+  55% { transform: scale(1.15); opacity: 1; }
+  70% { transform: scale(0.96); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-big { animation: pop-big 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.28) both; }
+
+/* Sparkles bursting outward then twinkling away. */
+@keyframes sparkle {
+  0% { opacity: 0; transform: rotate(var(--a, 0)) translateY(-30px) scale(0.4); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a, 0)) translateY(-90px) scale(1.1); }
+}
+.animate-sparkle { animation: sparkle 0.9s ease-out forwards; }
+
+/* Gentle, friendly jiggle for "try again" — soft, never harsh. */
+@keyframes jiggle {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-5px) rotate(-5deg); }
+  75% { transform: translateX(5px) rotate(5deg); }
+}
+.animate-jiggle { animation: jiggle 0.5s ease-in-out 2; }
+
+/* Soft idle breathing so answer choices feel alive and inviting to tap. */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.animate-breathe { animation: breathe 2.6s ease-in-out infinite; }
+
+/* Happy shake for a correct answer choice. */
+@keyframes correct-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18) rotate(-3deg); }
+  70% { transform: scale(0.95) rotate(2deg); }
+  100% { transform: scale(1); }
+}
+.animate-correct-pop { animation: correct-pop 0.55s ease-out; }
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop-big,
+  .animate-sparkle,
+  .animate-jiggle,
+  .animate-breathe,
+  .animate-correct-pop,
+  .animate-float,
+  .animate-wiggle,
+  .animate-bounce-in,
+  .confetti-piece {
+    animation: none !important;
+  }
+}
