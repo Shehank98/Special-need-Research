@@ -921,31 +921,55 @@ component that makes this a *Dyscalculia* tool rather than a general maths app.
 Because the cohort is exclusively Dyscalculia learners, a dedicated
 **🌱 Number Foundations** module was added as the **first** module in the
 syllabus (`mathSyllabus.js`). It deliberately teaches the prerequisites *before*
-any arithmetic, each as a short learn → "you try" → play activity that reuses the
-existing teaching/quiz engine (so the same scoring, stars, response-time logging
-and research persistence apply). All activities are registered in the server
-whitelist (`server/routes/math.js`, module `foundations`, category
-`dyscalculia`), so their results flow into the standard progress and teacher
-reports automatically.
+any arithmetic. Each activity runs a full **teach → "you try" → practice** cycle
+and reuses the existing scoring/stars/response-time logging and research
+persistence. All activities are registered in the server whitelist
+(`server/routes/math.js`, module `foundations`, category `dyscalculia`), so their
+results flow into the standard progress and teacher reports automatically.
+
+**Animated "explainer video" lessons.** Every foundation activity opens with a
+short, narrated, animated lesson (`components/math/ConceptVideo.jsx`, content in
+`lib/foundationsLessons.js`) that plays like a video: each *scene* shows an
+animated visual and is **read aloud**, auto-advancing when the narration ends
+(`useTTS` now exposes an `onend` hook, with a length-based fallback timer).
+Children can **pause, replay a line, step back/forward, or re-watch** the whole
+lesson, and the final scene is a tap-to-answer "you try". This delivers the six
+introductory components requested in supervision:
+
+| Requested component | How it is delivered |
+|---|---|
+| **Short animated explainer videos** | `ConceptVideo` auto-plays multi-scene animated + narrated lessons with playback controls (▶️/⏸️/⏮️/replay) |
+| **Visual learning with pictures, objects & real-life examples** | scenes use apples, cars, fish, cookies, balloons, ten-frames, dot groups and number lines (`count`, `tenframe`, `compare`, `numberLine`, `groups` visuals) |
+| **Interactive number-recognition exercises** | the `number_recognition` / `number_words` activities + the in-lesson `InteractiveTry` and the practice round |
+| **Step-by-step guided demonstrations before the real task** | each lesson walks concept → worked example → "you try" *before* the scored practice game |
+| **Simplified introductory lessons that build confidence gradually** | small number ranges, 3 difficulty levels with unlocking, no timers/penalties |
+| **Multi-sensory (visual + audio + interactive feedback)** | animation (visual) + Text-to-Speech narration (audio) + tap-to-answer with spoken praise (interactive) on every scene |
+
+The six activities and the skill each builds:
 
 | Foundation activity | Dyscalculia skill it builds | How it works (code) |
 |---|---|---|
 | **Readiness Check** (`foundations_check`) | baseline number-sense screening | `FoundationsCheck.jsx` samples the six skills below, scores readiness, and **recommends a starting point** (Foundations vs. the Numbers module) by band (< 50 / 50–79 / ≥ 80); the score is persisted as a normal result for baseline + change tracking |
-| **Count the Objects** (`count_objects`) | counting & quantity (number sense, subitising) | `GENERATORS.count_objects` shows N pictures (`count` visual in `TeachVisual.jsx`); the child taps the matching numeral |
-| **Find the Number** (`number_recognition`) | numeral recognition (spoken/written word → digit) | hears/reads a number word and taps the digit |
-| **Number Words** (`number_words`) | the numeral ↔ word link | shows a numeral; the child picks the word that names it (bilingual word bank, `NUM_EN`/`NUM_SI`) |
-| **More or Fewer** (`compare_quantity`) | magnitude comparison | the `compare` visual shows two dot groups; the child chooses which has more/fewer |
-| **Before & After** (`number_order`) | number sequence | a gapped sequence (`8, ?`) prompts the next/previous number |
-| **Maths Signs** (`symbols`) | meaning of `+ − = × ÷ < >` | the child matches a sign to its meaning |
+| **Count the Objects** (`count_objects`) | counting & quantity (number sense, subitising) | animated lesson (count apples/cars, ten-frame) then `GENERATORS.count_objects` — the child taps the numeral matching N pictures |
+| **Find the Number** (`number_recognition`) | numeral recognition (spoken/written word → digit) | lesson links shape ↔ name ↔ quantity; the child hears/reads a number word and taps the digit |
+| **Number Words** (`number_words`) | the numeral ↔ word link | lesson pairs numeral and word; the child picks the word that names a numeral (bilingual bank, `NUM_EN`/`NUM_SI`) |
+| **More or Fewer** (`compare_quantity`) | magnitude comparison | lesson shows two dot groups (`compare` visual, incl. "equal"); the child chooses which has more/fewer |
+| **Before & After** (`number_order`) | number sequence | lesson uses a `numberLine` and a gapped sequence (`8, ?`) to prompt the next/previous number |
+| **Maths Signs** (`symbols`) | meaning of `+ − = × ÷ < >` | lesson explains each sign; the child matches a sign to its meaning |
 
 Difficulty scales the number range (e.g. 1–5 → 1–10 → 1–20) and tightens the
 distractors at higher levels, exactly as the rest of the maths engine does.
+Opening a lesson logs a `lesson_started` engagement event, so lesson-watching
+contributes to the engagement metrics in §10.5.
 
 ### 19.4 Further enhancements (not yet implemented)
 Flagged honestly so the write-up does not overclaim:
 
-- **Short animated explainer videos** in the `learn` phase (the `TeachIntro`
-  slot exists; today it uses animated CSS/SVG visuals rather than video clips).
+- **Pre-recorded video / voice-over clips.** The animated explainer lessons
+  (§19.3) are rendered live (CSS/SVG animation + browser Text-to-Speech narration)
+  rather than streamed media files. This is intentional — it keeps the bundle
+  tiny and works offline/on low-end devices — but a teacher-recorded voice-over
+  or MP4 could be slotted into the same `ConceptVideo` scenes later.
 - **Tracing/writing of numerals** — the `TracingCanvas` + prompt-fading
   machinery already exists for letters and could scaffold digit formation.
 - **Auto-routing from the Readiness Check** straight into a tailored playlist

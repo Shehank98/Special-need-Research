@@ -105,6 +105,46 @@ export default function TeachVisual({ v }) {
       );
     }
 
+    case 'tenframe': {
+      // A ten-frame — a classic Dyscalculia tool for "seeing" quantity.
+      const count = Math.max(0, Math.min(10, v.count ?? 0));
+      return (
+        <div className="mx-auto inline-grid grid-cols-5 gap-1 rounded-2xl bg-white p-3 shadow">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <span key={i} className="flex h-11 w-11 items-center justify-center rounded-lg border-2 border-slate-300">
+              {i < count && (
+                <span className="h-7 w-7 rounded-full bg-rose-400 animate-bounce-in" style={{ animationDelay: `${i * 0.1}s` }} />
+              )}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
+    case 'numberLine': {
+      const max = v.max ?? 10;
+      const mark = v.mark;
+      const W = 320;
+      const pad = 18;
+      const span = W - 2 * pad;
+      return (
+        <svg viewBox={`0 0 ${W} 84`} className="mx-auto w-full max-w-md animate-bounce-in">
+          <line x1={pad} y1={50} x2={W - pad} y2={50} stroke="#475569" strokeWidth="3" />
+          {Array.from({ length: max + 1 }).map((_, i) => {
+            const x = pad + (span * i) / max;
+            const hi = i === mark;
+            return (
+              <g key={i}>
+                <line x1={x} y1={44} x2={x} y2={56} stroke="#475569" strokeWidth="2" />
+                <text x={x} y={74} textAnchor="middle" fontSize="12" fontWeight="bold" fill={hi ? '#dc2626' : '#334155'}>{i}</text>
+                {hi && <circle cx={x} cy={50} r="9" fill="#dc2626" />}
+              </g>
+            );
+          })}
+        </svg>
+      );
+    }
+
     case 'compare': {
       // Two groups of dots to compare (more / fewer).
       const a = v.a ?? 1;

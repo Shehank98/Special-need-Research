@@ -3,9 +3,11 @@ import { useParams, useNavigate, Navigate, useSearchParams } from 'react-router-
 import { useLanguage } from '../../context/LanguageContext.jsx';
 import Layout from '../../components/Layout.jsx';
 import TeachIntro from '../../components/math/TeachIntro.jsx';
+import ConceptVideo from '../../components/math/ConceptVideo.jsx';
 import LevelSelect from '../../components/math/LevelSelect.jsx';
 import { findActivity } from '../../lib/mathSyllabus.js';
 import { TEACH } from '../../lib/mathTeach.js';
+import { FOUNDATIONS_LESSONS } from '../../lib/foundationsLessons.js';
 import { useMathProgress } from '../../lib/mathLevels.js';
 import PlaceValue from './PlaceValue.jsx';
 import Addition from './Addition.jsx';
@@ -48,12 +50,16 @@ export default function MathActivity() {
   const generator = GENERATORS[activityId];
   const info = findActivity(activityId);
   const teachSteps = TEACH[activityId];
+  // Foundations activities open with a full animated "explainer video" lesson;
+  // other topics use the shorter TeachIntro.
+  const lesson = FOUNDATIONS_LESSONS[activityId];
+  const hasLearn = !!lesson || !!teachSteps;
   const { map, reload } = useMathProgress();
 
   // Flow: learn -> choose level -> play. (Assessment & the readiness check
   // have no levels — they run a single fixed round.)
   const hasLevels = activityId !== 'assessment' && activityId !== 'foundations_check';
-  const [phase, setPhase] = useState(teachSteps ? 'learn' : hasLevels ? 'levels' : 'play');
+  const [phase, setPhase] = useState(hasLearn ? 'learn' : hasLevels ? 'levels' : 'play');
   const [level, setLevel] = useState(Number(params.get('level')) || 1);
   const [playKey, setPlayKey] = useState(0); // bump to remount the game fresh
 
@@ -91,7 +97,11 @@ export default function MathActivity() {
         </h1>
 
         {phase === 'learn' && (
-          <TeachIntro steps={teachSteps} onStart={afterLearn} />
+          lesson ? (
+            <ConceptVideo activityId={activityId} lesson={lesson} onStart={afterLearn} />
+          ) : (
+            <TeachIntro steps={teachSteps} onStart={afterLearn} />
+          )
         )}
 
         {phase === 'levels' && (
