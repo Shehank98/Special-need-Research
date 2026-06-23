@@ -33,7 +33,8 @@ dyscalculia, dysorthographia), with a built-in two-group engagement study.*
 16. [Security, privacy & ethics](#16-security-privacy--ethics)
 17. [Deployment & setup](#17-deployment--setup)
 18. [Limitations & threats to validity](#18-limitations--threats-to-validity)
-19. [Glossary](#19-glossary)
+19. [Dyscalculia-specific design & pre-mathematics support](#19-dyscalculia-specific-design--pre-mathematics-support)
+20. [Glossary](#20-glossary)
 
 ---
 
@@ -460,6 +461,30 @@ For triangulation, teachers rate any student (both groups) on a 1–5 rubric:
 `attention_1to5`, `participation_1to5`, `frustration_1to5`, plus free-text
 `notes`. Multiple ratings over time form an observational trend.
 
+### 10.5 Engagement & motivation indicators (mapping to the study's questions)
+A common examiner expectation is that the research measures **engagement and
+motivation**, not only mathematical competency. Every indicator below is already
+captured by the system — this table maps each requested indicator to the
+concrete data source so it can be reported directly.
+
+| Engagement indicator | How the system measures it | Source |
+|---|---|---|
+| **Time spent using the software** | session minutes (`logout − login`) per login + accumulated in-activity time | `study_sessions`, `progress.time_spent_seconds` |
+| **Number of activities completed** | count of completed lessons/activities (overall and per topic/disability) | `progress.completed`, teacher report `lessons_completed` |
+| **Frequency of interactions** | volume of logged behavioural events (attempts, answers, retries, TTS taps, hints) and login days | `engagement_events`, `study_sessions.session_date` |
+| **Attention & participation during sessions** | teacher rubric scores (1–5) recorded per session | `teacher_ratings.attention_1to5`, `participation_1to5` |
+| **Motivation / interest before & after** | start-of-session and end-of-session **mood** (5-face scale, 1–5); the **mood delta** is a pre/post affect-change variable | `engagement_events` (`mood_start`, `mood_end`), see §10.2 |
+| **Frustration (inverse motivation signal)** | teacher-rated frustration per session, triangulating self-reported mood | `teacher_ratings.frustration_1to5` |
+
+Because each indicator carries `study_group` and (where relevant) `week_number`,
+the same signals support **three comparisons**: intervention vs. control,
+week-1 vs. week-2 (within-subject change), and per-student trends. This lets the
+study evaluate whether the software **increases engagement and motivation** in
+children with Dyscalculia, alongside any gains in mathematical competency. For a
+pre/post "motivation and interest" measure specifically, use the mood delta
+(`mood_end − mood_start`) and the trend in attention/participation ratings across
+the two weeks (analysed with the non-parametric tests in §15.3).
+
 ---
 
 ## 11. Per-question response-time analytics
@@ -849,7 +874,79 @@ Pure-SQL alternative (no Node for DB): `psql "$DATABASE_URL" -f server/db/schema
 
 ---
 
-## 19. Glossary
+## 19. Dyscalculia-specific design & pre-mathematics support
+
+Because the final target group consists **only of students identified with
+Dyscalculia**, this section makes explicit *what in the software is designed for
+Dyscalculia* (rather than being a general mathematics app) and *how each feature
+addresses a known characteristic of the disability*. It is written to directly
+answer the anticipated examiner question:
+
+> *"What features in the software are specifically designed for children with
+> Dyscalculia, and how do these features help overcome the challenges associated
+> with the disability?"*
+
+### 19.1 Why Dyscalculia needs more than maths exercises
+Dyscalculia is a specific learning difficulty in **numerical processing**.
+Affected children frequently struggle *before* they reach problem-solving — with
+**number recognition**, **quantity / magnitude understanding (number sense)**,
+**mathematical symbols** (`+ − × ÷ = < >`), **place value**, **arithmetic-fact
+retrieval**, and they often carry **maths anxiety** and **slower processing /
+higher working-memory load**. A tool that only presents problems to solve would
+assume foundations these learners may not yet have. The platform therefore
+*teaches and represents the numbers themselves* before asking the child to
+calculate.
+
+### 19.2 How the software is built for Dyscalculia (already implemented)
+Every item below is grounded in the source code cited.
+
+| Dyscalculia challenge | Feature that addresses it | Where (code) |
+|---|---|---|
+| **Number & symbol recognition** | A **learn-first flow** runs an animated teaching intro *before* any game (`learn → choose level → play`), with place-value digit highlighting and explicit symbol/expression visuals (`+ − × ÷ =`) | `MathActivity.jsx` flow (§6.2); `TEACH` steps & `TeachVisual.jsx` (`number`, `expr` visuals) |
+| **Quantity / magnitude (number sense, subitising)** | Concrete **object-group visuals** (e.g. "3 rows of 4 apples = 12") and a dedicated **count-the-objects** activity where the child maps a set of pictures to a numeral | `TEACH` `groups` visual; `NumberGame.jsx` (count objects → tap the number); `numbers` lesson type (§6.1) |
+| **Abstract concepts (fractions, place value, area)** | **Manipulable/visual models** — fraction bars, place-value digits, area grids — turn abstractions into pictures | `TeachVisual.jsx` (`fractionBar`, `fraction`, `grid`, `number`) |
+| **Step-by-step understanding** | A **guided demonstration then a scaffolded "try"** step is shown before the real round, so the child rehearses the concept with feedback first | `mathTeach.js` `try` steps; `InteractiveTry.jsx`; `TeachIntro.jsx` |
+| **Multi-sensory learning** | Each concept is delivered through **three channels at once**: *visual* (animated SVG/emoji), *audio* (Text-to-Speech on every prompt, rate 0.85), and *interactive* (tap/drag with feedback) | `TeachVisual.jsx` animations; `useTTS.js`; `experience.js` instant-feedback layer |
+| **Maths anxiety / low confidence** | **No timers, no hint penalty in maths, gradual unlocking** (Level 1 always open; pass ≥ 70% to unlock the next), plus encouragement messages in the intervention arm — designed to build confidence slowly | §7.2, §8.1 (`PASS_SCORE`); `Encouragement.jsx`; `experience.js` |
+| **Slow numerical processing / working memory** | **Per-question response time** is captured and a `slow_responder` flag gives extra-time learners visibility; short rounds (default 6 questions) limit cognitive load | §11; `question_responses`; `slow_responder` flag (§12.3) |
+| **Reading-load barrier to maths** | **Dyslexia-friendly, bilingual presentation** (OpenDyslexic, large text, Sinhala/English, picture answers) removes literacy obstacles that would otherwise mask numeracy ability — important given frequent comorbidity | §6.3 accessibility features |
+
+**In short:** the introductory teaching layer (number/symbol recognition,
+quantity via concrete objects, step-by-step guided demos, simplified and
+gradual lessons, and multi-sensory visual + audio + interactive delivery) is the
+component that makes this a *Dyscalculia* tool rather than a general maths app.
+
+### 19.3 Recommended enhancements to strengthen the Dyscalculia focus
+The following extend the existing learn-first layer and are **proposed, not yet
+implemented** (flagged honestly so the write-up does not overclaim). They map
+one-to-one onto the introductory components requested in supervision:
+
+- **Short animated explainer videos** for numbers and basic concepts, shown as
+  an optional first step in the `learn` phase (the flow and `TeachIntro`
+  component already provide the slot; today it uses animated CSS visuals rather
+  than video clips).
+- **Real-life / object-based visual lessons** (e.g. counting fruit, money,
+  classroom objects) expanding the current `groups`/`emoji`/`NumberGame`
+  representations toward more everyday contexts.
+- **Dedicated number-recognition exercises** (match numeral ↔ quantity ↔ number
+  word) as a standalone "Pre-Numbers" module before the arithmetic modules.
+- **A "foundations / readiness" pre-check** that routes a child to the
+  introductory lessons when number-sense gaps are detected, then into the graded
+  activities — extending the existing adaptive-difficulty loop (§8.2).
+- **Tracing/writing of numerals** (the `TracingCanvas` + prompt-fading
+  machinery already exists for letters; the same mechanism can scaffold digit
+  formation).
+
+### 19.4 Demonstrating accommodation in the research write-up
+To evidence that the software *accommodates Dyscalculia* (not just teaches
+maths), pair §19.2 with the engagement/motivation measures in §10.5: report (a)
+the foundational teaching features used, and (b) whether they coincide with
+improved confidence/motivation (mood delta, attention/participation) and reduced
+frustration over the two weeks — alongside competency gains.
+
+---
+
+## 20. Glossary
 
 | Term | Meaning |
 |---|---|
