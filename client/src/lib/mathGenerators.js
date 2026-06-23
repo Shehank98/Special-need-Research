@@ -22,7 +22,105 @@ const DIRS = {
   W: { en: 'West', si: 'බටහිර', opp: 'E' },
 };
 
+// Number words 0–20 (used by the Dyscalculia Foundations activities, which teach
+// the link between a quantity, its numeral, and its spoken/written word).
+const NUM_EN = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+const NUM_SI = ['බිංදුව', 'එක', 'දෙක', 'තුන', 'හතර', 'පහ', 'හය', 'හත', 'අට', 'නවය', 'දහය', 'එකොළහ', 'දොළහ', 'දහතුන', 'දහහතර', 'පහළොව', 'දහසය', 'දහහත', 'දහඅට', 'දහනවය', 'විස්ස'];
+const wordEn = (n) => NUM_EN[n] ?? String(n);
+const wordSi = (n) => NUM_SI[n] ?? String(n);
+// Friendly countable pictures for quantity work.
+const COUNT_EMOJI = ['🍎', '⭐', '🐟', '🎈', '🍓', '🐝', '🌸', '🚗'];
+
 export const GENERATORS = {
+  // ---- Foundations (Dyscalculia pre-mathematics) ----
+  // These build the prerequisites many Dyscalculia learners lack BEFORE
+  // arithmetic: counting/quantity (number sense), numeral recognition, the
+  // numeral↔word link, comparison (more/less), sequence (before/after) and the
+  // meaning of the maths signs. Distractors sit closer together at higher levels.
+  count_objects(level = 1) {
+    const max = [5, 10, 20][level - 1] || 10;
+    const n = 1 + r(max);
+    const spread = [3, 2, 1][level - 1] || 2;
+    return {
+      prompt_en: 'How many do you see?',
+      prompt_si: 'ඔබ දකින්නේ කීයද?',
+      visual: { type: 'count', value: pickOne(COUNT_EMOJI), count: n },
+      options: numOpts(n, spread),
+    };
+  },
+  number_recognition(level = 1) {
+    const max = [5, 10, 20][level - 1] || 10;
+    const n = 1 + r(max);
+    const spread = [3, 2, 1][level - 1] || 2;
+    // spoken/written word -> tap the matching numeral
+    return {
+      prompt_en: `Tap the number "${wordEn(n)}"`,
+      prompt_si: `"${wordSi(n)}" අංකය තට්ටු කරන්න`,
+      options: numOpts(n, spread),
+    };
+  },
+  number_words(level = 1) {
+    const max = [5, 10, 20][level - 1] || 10;
+    const n = 1 + r(max);
+    // numeral -> pick the word that names it
+    const opts = new Set([n]);
+    while (opts.size < 3) opts.add(1 + r(max));
+    return {
+      prompt_en: `Which word means ${n}?`,
+      prompt_si: `${n} යන්නෙහි වචනය කුමක්ද?`,
+      visual: { type: 'expr', value: String(n) },
+      options: shuffle([...opts]).map((v) => ({ en: wordEn(v), si: wordSi(v), correct: v === n })),
+    };
+  },
+  compare_quantity(level = 1) {
+    const max = [5, 10, 20][level - 1] || 10;
+    let a = 1 + r(max);
+    let b = 1 + r(max);
+    while (b === a) b = 1 + r(max);
+    const askMore = r(2) === 0;
+    const target = askMore ? Math.max(a, b) : Math.min(a, b);
+    return {
+      prompt_en: askMore ? 'Which group has MORE?' : 'Which group has FEWER?',
+      prompt_si: askMore ? 'වැඩිපුර ඇත්තේ කුමන කණ්ඩායමේද?' : 'අඩුවෙන් ඇත්තේ කුමන කණ්ඩායමේද?',
+      visual: { type: 'compare', a, b },
+      options: shuffle([{ text: String(a), correct: a === target }, { text: String(b), correct: b === target }]),
+    };
+  },
+  number_order(level = 1) {
+    const max = [10, 20, 50][level - 1] || 20;
+    const n = 1 + r(max - 1);
+    const askAfter = r(2) === 0;
+    const correct = askAfter ? n + 1 : Math.max(0, n - 1);
+    return {
+      prompt_en: askAfter ? `What comes AFTER ${n}?` : `What comes BEFORE ${n}?`,
+      prompt_si: askAfter ? `${n} ට පසු කුමක්ද?` : `${n} ට පෙර කුමක්ද?`,
+      visual: { type: 'expr', value: askAfter ? `${n}, ?` : `?, ${n}` },
+      options: numOpts(correct, 2),
+    };
+  },
+  symbols(level = 1) {
+    const base = [
+      { sym: '+', en: 'add (plus)', si: 'එකතු කිරීම' },
+      { sym: '−', en: 'take away (minus)', si: 'අඩු කිරීම' },
+      { sym: '=', en: 'equals (same as)', si: 'සමානයි' },
+    ];
+    const more = [
+      { sym: '×', en: 'times (multiply)', si: 'ගුණ කිරීම' },
+      { sym: '÷', en: 'share (divide)', si: 'බෙදීම' },
+      { sym: '>', en: 'greater than', si: 'වැඩි' },
+      { sym: '<', en: 'less than', si: 'අඩු' },
+    ];
+    const pool = level >= 2 ? [...base, ...more] : base;
+    const target = pickOne(pool);
+    const opts = new Set([target.sym]);
+    while (opts.size < 3) opts.add(pickOne(pool).sym);
+    return {
+      prompt_en: `Which sign means "${target.en}"?`,
+      prompt_si: `"${target.si}" යන්නෙහි ලකුණ කුමක්ද?`,
+      options: shuffle([...opts]).map((s) => ({ text: s, correct: s === target.sym })),
+    };
+  },
+
   // ---- Numbers ----
   read_write(level = 1) {
     const th = 1 + r(9); const h = r(10); const t = r(10); const o = r(10);

@@ -19,10 +19,12 @@ import Shapes from './Shapes.jsx';
 import Shop from './Shop.jsx';
 import BarChart from './BarChart.jsx';
 import Assessment from './Assessment.jsx';
+import FoundationsCheck from './FoundationsCheck.jsx';
 import QuizGame from './QuizGame.jsx';
 import { GENERATORS } from '../../lib/mathGenerators.js';
 
 const REGISTRY = {
+  foundations_check: FoundationsCheck,
   place_value: PlaceValue,
   addition: Addition,
   subtraction: Subtraction,
@@ -48,8 +50,9 @@ export default function MathActivity() {
   const teachSteps = TEACH[activityId];
   const { map, reload } = useMathProgress();
 
-  // Flow: learn -> choose level -> play. (Assessment has no levels.)
-  const hasLevels = activityId !== 'assessment';
+  // Flow: learn -> choose level -> play. (Assessment & the readiness check
+  // have no levels — they run a single fixed round.)
+  const hasLevels = activityId !== 'assessment' && activityId !== 'foundations_check';
   const [phase, setPhase] = useState(teachSteps ? 'learn' : hasLevels ? 'levels' : 'play');
   const [level, setLevel] = useState(Number(params.get('level')) || 1);
   const [playKey, setPlayKey] = useState(0); // bump to remount the game fresh

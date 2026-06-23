@@ -9,6 +9,14 @@ const router = express.Router();
 // (type 'math', category 'dyscalculia') so results flow into the existing
 // progress / teacher-report aggregation with no schema changes.
 const MATH_ACTIVITIES = {
+  // Foundations (Dyscalculia pre-mathematics)
+  foundations_check: { en: 'Readiness Check', si: 'සූදානම් පරීක්ෂාව', difficulty: 1, module: 'foundations' },
+  count_objects: { en: 'Count the Objects', si: 'වස්තූන් ගණන් කිරීම', difficulty: 1, module: 'foundations' },
+  number_recognition: { en: 'Find the Number', si: 'අංකය හඳුනා ගැනීම', difficulty: 1, module: 'foundations' },
+  number_words: { en: 'Number Words', si: 'අංක වචන', difficulty: 1, module: 'foundations' },
+  compare_quantity: { en: 'More or Fewer', si: 'වැඩි හෝ අඩු', difficulty: 1, module: 'foundations' },
+  number_order: { en: 'Before & After', si: 'පෙර හා පසු', difficulty: 1, module: 'foundations' },
+  symbols: { en: 'Maths Signs', si: 'ගණිත ලකුණු', difficulty: 1, module: 'foundations' },
   place_value: { en: 'Place Value', si: 'ස්ථානීය අගය', difficulty: 2, module: 'numbers' },
   addition: { en: 'Addition with Carrying', si: 'එකතු කිරීම', difficulty: 2, module: 'arithmetic' },
   subtraction: { en: 'Subtraction with Borrowing', si: 'අඩු කිරීම', difficulty: 3, module: 'arithmetic' },

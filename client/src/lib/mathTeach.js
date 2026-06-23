@@ -3,6 +3,35 @@
 // components/math/TeachVisual.jsx.
 
 export const TEACH = {
+  // ---- Foundations (Dyscalculia pre-mathematics) ----
+  count_objects: [
+    { visual: { type: 'count', value: '🍎', count: 3 }, en: 'Counting tells us how many. Touch each apple and say one number for each: 1, 2, 3.', si: 'ගණන් කිරීමෙන් කීයද කියා දැනගනිමු. සෑම ඇපල් එකකටම එක් අංකයක් කියන්න: 1, 2, 3.' },
+    { visual: { type: 'count', value: '⭐', count: 5 }, en: 'The last number you say is how many there are. Here there are 5 stars.', si: 'ඔබ අවසානයට කියන අංකය තමයි ප්‍රමාණය. මෙහි තරු 5ක් ඇත.' },
+    { try: { prompt_en: 'How many balloons?', prompt_si: 'බැලූන කීයද?', visual: { type: 'count', value: '🎈', count: 4 }, options: [{ text: '4', correct: true }, { text: '3', correct: false }, { text: '5', correct: false }] } },
+  ],
+  number_recognition: [
+    { visual: { type: 'expr', value: '3' }, en: 'Every number has a name. This number is called "three".', si: 'සෑම අංකයකටම නමක් ඇත. මෙම අංකය "තුන" ලෙස හැඳින්වේ.' },
+    { visual: { type: 'expr', value: '7' }, en: 'And this one is "seven". We listen to the name, then find the number.', si: 'මෙය "හත" යි. අපි නම අසා, පසුව අංකය සොයමු.' },
+    { try: { prompt_en: 'Tap the number "five"', prompt_si: '"පහ" අංකය තට්ටු කරන්න', options: [{ text: '5', correct: true }, { text: '2', correct: false }, { text: '8', correct: false }] } },
+  ],
+  number_words: [
+    { visual: { type: 'expr', value: '4' }, en: 'This numeral is 4. Its word is "four".', si: 'මෙම ඉලක්කම 4 යි. එහි වචනය "හතර" යි.' },
+    { try: { prompt_en: 'Which word means 2?', prompt_si: '2 යන්නෙහි වචනය කුමක්ද?', visual: { type: 'expr', value: '2' }, options: [{ en: 'two', si: 'දෙක', correct: true }, { en: 'six', si: 'හය', correct: false }, { en: 'ten', si: 'දහය', correct: false }] } },
+  ],
+  compare_quantity: [
+    { visual: { type: 'compare', a: 5, b: 2 }, en: 'To compare, count each group. The group with more dots is bigger.', si: 'සැසඳීමට, සෑම කණ්ඩායමක්ම ගණන් කරන්න. තිත් වැඩි කණ්ඩායම විශාලයි.' },
+    { try: { prompt_en: 'Which group has MORE?', prompt_si: 'වැඩිපුර ඇත්තේ කුමන කණ්ඩායමේද?', visual: { type: 'compare', a: 3, b: 6 }, options: [{ text: '6', correct: true }, { text: '3', correct: false }] } },
+  ],
+  number_order: [
+    { visual: { type: 'expr', value: '5, 6, 7' }, en: 'Numbers come in order. After 5 comes 6, then 7.', si: 'අංක පිළිවෙළට එයි. 5 ට පසු 6, ඉන්පසු 7.' },
+    { try: { prompt_en: 'What comes AFTER 8?', prompt_si: '8 ට පසු කුමක්ද?', visual: { type: 'expr', value: '8, ?' }, options: [{ text: '9', correct: true }, { text: '7', correct: false }, { text: '10', correct: false }] } },
+  ],
+  symbols: [
+    { visual: { type: 'expr', value: '2 + 1 = 3' }, en: 'The + sign means add. The = sign means "the same as".', si: '+ ලකුණ එකතු කිරීම යි. = ලකුණ "සමානයි" යන්නයි.' },
+    { visual: { type: 'expr', value: '3 − 1 = 2' }, en: 'The − sign means take away.', si: '− ලකුණ අඩු කිරීම යි.' },
+    { try: { prompt_en: 'Which sign means "add"?', prompt_si: '"එකතු කිරීම" යන්නෙහි ලකුණ කුමක්ද?', options: [{ text: '+', correct: true }, { text: '−', correct: false }, { text: '=', correct: false }] } },
+  ],
+
   place_value: [
     {
       visual: { type: 'number', value: '4827', highlight: -1 },

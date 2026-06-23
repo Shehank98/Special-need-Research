@@ -91,6 +91,39 @@ export default function TeachVisual({ v }) {
       );
     }
 
+    case 'count': {
+      // A countable set of pictures for quantity / number-sense work.
+      const { value = '🍎', count = 1 } = v;
+      return (
+        <div className="mx-auto flex max-w-xs flex-wrap justify-center gap-2 rounded-2xl bg-white p-4 shadow">
+          {Array.from({ length: count }).map((_, i) => (
+            <span key={i} className="animate-bounce-in text-4xl" style={{ animationDelay: `${i * 0.08}s` }}>
+              {value}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
+    case 'compare': {
+      // Two groups of dots to compare (more / fewer).
+      const a = v.a ?? 1;
+      const b = v.b ?? 1;
+      const row = (count, color, key) => (
+        <div key={key} className="flex flex-wrap items-center justify-center gap-1.5 rounded-2xl bg-slate-50 p-3">
+          {Array.from({ length: count }).map((_, i) => (
+            <span key={i} className={`inline-block h-6 w-6 rounded-full ${color} animate-bounce-in`} style={{ animationDelay: `${i * 0.05}s` }} />
+          ))}
+        </div>
+      );
+      return (
+        <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
+          {row(a, 'bg-sky-400', 'a')}
+          {row(b, 'bg-violet-400', 'b')}
+        </div>
+      );
+    }
+
     case 'fractionBar': {
       const { parts = 4, shaded = 1 } = v;
       const w = 300;

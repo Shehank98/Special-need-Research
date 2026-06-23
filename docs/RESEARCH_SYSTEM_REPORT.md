@@ -263,11 +263,12 @@ Each lesson has a **difficulty 1–5** and a **category** (`dyslexia`,
 
 **(b) Code-driven Grade-4 maths activities** (`client/src/lib/mathSyllabus.js`
 and `client/src/lib/mathGenerators.js`). These are the primary student
-experience. The syllabus is organised into **7 modules → topics → interactive
+experience. The syllabus is organised into **8 modules → topics → interactive
 activities**:
 
 | Module | Example topics / activities |
 |---|---|
+| 🌱 Number Foundations | **readiness check**, count the objects, find the number, number words, more/fewer, before & after, maths signs *(Dyscalculia pre-mathematics — see §19)* |
 | 🔢 Numbers | read & write numbers, place value, ordering, patterns, multiples, fractions, Roman numerals |
 | ➕ Arithmetic | addition (carrying), subtraction (borrowing), times tables, division |
 | 📏 Measurement | telling time, set the clock, capacity, length, weight, area |
@@ -916,28 +917,41 @@ quantity via concrete objects, step-by-step guided demos, simplified and
 gradual lessons, and multi-sensory visual + audio + interactive delivery) is the
 component that makes this a *Dyscalculia* tool rather than a general maths app.
 
-### 19.3 Recommended enhancements to strengthen the Dyscalculia focus
-The following extend the existing learn-first layer and are **proposed, not yet
-implemented** (flagged honestly so the write-up does not overclaim). They map
-one-to-one onto the introductory components requested in supervision:
+### 19.3 The Number Foundations module (Dyscalculia pre-mathematics)
+Because the cohort is exclusively Dyscalculia learners, a dedicated
+**🌱 Number Foundations** module was added as the **first** module in the
+syllabus (`mathSyllabus.js`). It deliberately teaches the prerequisites *before*
+any arithmetic, each as a short learn → "you try" → play activity that reuses the
+existing teaching/quiz engine (so the same scoring, stars, response-time logging
+and research persistence apply). All activities are registered in the server
+whitelist (`server/routes/math.js`, module `foundations`, category
+`dyscalculia`), so their results flow into the standard progress and teacher
+reports automatically.
 
-- **Short animated explainer videos** for numbers and basic concepts, shown as
-  an optional first step in the `learn` phase (the flow and `TeachIntro`
-  component already provide the slot; today it uses animated CSS visuals rather
-  than video clips).
-- **Real-life / object-based visual lessons** (e.g. counting fruit, money,
-  classroom objects) expanding the current `groups`/`emoji`/`NumberGame`
-  representations toward more everyday contexts.
-- **Dedicated number-recognition exercises** (match numeral ↔ quantity ↔ number
-  word) as a standalone "Pre-Numbers" module before the arithmetic modules.
-- **A "foundations / readiness" pre-check** that routes a child to the
-  introductory lessons when number-sense gaps are detected, then into the graded
-  activities — extending the existing adaptive-difficulty loop (§8.2).
-- **Tracing/writing of numerals** (the `TracingCanvas` + prompt-fading
-  machinery already exists for letters; the same mechanism can scaffold digit
-  formation).
+| Foundation activity | Dyscalculia skill it builds | How it works (code) |
+|---|---|---|
+| **Readiness Check** (`foundations_check`) | baseline number-sense screening | `FoundationsCheck.jsx` samples the six skills below, scores readiness, and **recommends a starting point** (Foundations vs. the Numbers module) by band (< 50 / 50–79 / ≥ 80); the score is persisted as a normal result for baseline + change tracking |
+| **Count the Objects** (`count_objects`) | counting & quantity (number sense, subitising) | `GENERATORS.count_objects` shows N pictures (`count` visual in `TeachVisual.jsx`); the child taps the matching numeral |
+| **Find the Number** (`number_recognition`) | numeral recognition (spoken/written word → digit) | hears/reads a number word and taps the digit |
+| **Number Words** (`number_words`) | the numeral ↔ word link | shows a numeral; the child picks the word that names it (bilingual word bank, `NUM_EN`/`NUM_SI`) |
+| **More or Fewer** (`compare_quantity`) | magnitude comparison | the `compare` visual shows two dot groups; the child chooses which has more/fewer |
+| **Before & After** (`number_order`) | number sequence | a gapped sequence (`8, ?`) prompts the next/previous number |
+| **Maths Signs** (`symbols`) | meaning of `+ − = × ÷ < >` | the child matches a sign to its meaning |
 
-### 19.4 Demonstrating accommodation in the research write-up
+Difficulty scales the number range (e.g. 1–5 → 1–10 → 1–20) and tightens the
+distractors at higher levels, exactly as the rest of the maths engine does.
+
+### 19.4 Further enhancements (not yet implemented)
+Flagged honestly so the write-up does not overclaim:
+
+- **Short animated explainer videos** in the `learn` phase (the `TeachIntro`
+  slot exists; today it uses animated CSS/SVG visuals rather than video clips).
+- **Tracing/writing of numerals** — the `TracingCanvas` + prompt-fading
+  machinery already exists for letters and could scaffold digit formation.
+- **Auto-routing from the Readiness Check** straight into a tailored playlist
+  (currently it *recommends* a starting point; the child taps to proceed).
+
+### 19.5 Demonstrating accommodation in the research write-up
 To evidence that the software *accommodates Dyscalculia* (not just teaches
 maths), pair §19.2 with the engagement/motivation measures in §10.5: report (a)
 the foundational teaching features used, and (b) whether they coincide with

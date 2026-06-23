@@ -4,6 +4,26 @@
 
 export const MATH_MODULES = [
   {
+    id: 'foundations',
+    en: 'Number Foundations',
+    si: 'සංඛ්‍යා පදනම',
+    emoji: '🌱',
+    color: 'bg-lime-100',
+    accent: 'text-lime-700',
+    // Pre-mathematics building blocks for Dyscalculia learners. Start here:
+    // a readiness check, then counting, numeral recognition, words, comparing,
+    // ordering and the meaning of the maths signs — before any arithmetic.
+    topics: [
+      { id: 'readiness', en: 'Readiness Check', si: 'සූදානම් පරීක්ෂාව', activity: 'foundations_check' },
+      { id: 'count-objects', en: 'Count the Objects', si: 'වස්තූන් ගණන් කිරීම', activity: 'count_objects' },
+      { id: 'number-recognition', en: 'Find the Number', si: 'අංකය හඳුනා ගැනීම', activity: 'number_recognition' },
+      { id: 'number-words', en: 'Number Words', si: 'අංක වචන', activity: 'number_words' },
+      { id: 'compare-quantity', en: 'More or Fewer', si: 'වැඩි හෝ අඩු', activity: 'compare_quantity' },
+      { id: 'number-order', en: 'Before & After', si: 'පෙර හා පසු', activity: 'number_order' },
+      { id: 'maths-signs', en: 'Maths Signs', si: 'ගණිත ලකුණු', activity: 'symbols' },
+    ],
+  },
+  {
     id: 'numbers',
     en: 'Numbers',
     si: 'සංඛ්‍යා',
