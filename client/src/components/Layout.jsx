@@ -35,8 +35,11 @@ export default function Layout({ children }) {
     finishLogout();
   }
 
+  // Children get the dyslexia-friendly font; teachers get a normal typeface.
+  const fontClass = user?.role === 'teacher' ? 'ui-normal' : 'font-dyslexic';
+
   return (
-    <div className="min-h-screen bg-cream font-dyslexic text-ink">
+    <div className={`min-h-screen bg-cream text-ink ${fontClass}`}>
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-pastel-purple/80 px-4 py-3 shadow backdrop-blur">
         <button
           onClick={() => navigate(user?.role === 'teacher' ? '/teacher' : '/home')}
