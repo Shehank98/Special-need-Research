@@ -19,6 +19,7 @@ import sessionRoutes from './routes/sessions.js';
 import tracingRoutes from './routes/tracing.js';
 import mathRoutes from './routes/math.js';
 import responseRoutes from './routes/responses.js';
+import guardianRoutes from './routes/guardian.js';
 import { requireAuth } from './middleware/auth.js';
 import { query } from './db/pool.js';
 import { runMigrations } from './db/migrate.js';
@@ -115,6 +116,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/tracing', tracingRoutes);
 app.use('/api/math', mathRoutes);
 app.use('/api/responses', responseRoutes);
+app.use('/api/guardian', guardianRoutes);
 
 // Record a logout time for the most recent open study session.
 app.post('/api/auth/logout', requireAuth, async (req, res) => {

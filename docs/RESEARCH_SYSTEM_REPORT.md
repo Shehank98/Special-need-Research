@@ -428,7 +428,7 @@ A single flexible table captures fine-grained signals. Valid `event_type`s
 ```
 tts_used, hint_used, badge_earned, quiz_answered, lesson_started,
 lesson_completed, attempt, completion, retry, time_on_task, mood,
-level_select, self_correction, tracing_attempt
+level_select, self_correction, tracing_attempt, chatbot_used
 ```
 Each event can carry: `activity_type`, `metric_name`, `metric_value` (numeric),
 `session_id`, `week_number`, and a free-form JSON `metadata` blob. Events are
@@ -962,7 +962,26 @@ distractors at higher levels, exactly as the rest of the maths engine does.
 Opening a lesson logs a `lesson_started` engagement event, so lesson-watching
 contributes to the engagement metrics in §10.5.
 
-### 19.4 Further enhancements (not yet implemented)
+### 19.4 Voice-based study assistant and guardian progress tracking
+Two further features align the platform with the intervention described in the
+research proposal (Sections 1.6 and 3.5.4):
+
+- **Voice-based study assistant** (`components/math/StudyBuddy.jsx`,
+  `lib/assistant.js`, `hooks/useSpeechInput.js`). An on-demand helper available
+  to students across the app. The child asks by voice (browser speech
+  recognition, where available) or by tapping a suggested question, and the
+  assistant answers in simple bilingual language and reads the reply aloud
+  (`useTTS`). Matching is keyword-based, so it runs offline on modest devices.
+  It operationalises IV4 and the ZPD "more knowledgeable other", and each use is
+  logged as a `chatbot_used` engagement event.
+- **Guardian progress tracking** (`pages/GuardianView.jsx`,
+  `server/routes/guardian.js`, route `/guardian`). A read-only summary
+  (activities completed, levels mastered, average score, minutes learning,
+  active days, badges, mood trend, recent activities) retrieved with the child's
+  login code, so a parent or guardian can follow progress outside the classroom.
+  Access is read-only and code-based, matching the anonymised student login.
+
+### 19.5 Further enhancements (not yet implemented)
 Flagged honestly so the write-up does not overclaim:
 
 - **Pre-recorded video / voice-over clips.** The animated explainer lessons
@@ -975,7 +994,7 @@ Flagged honestly so the write-up does not overclaim:
 - **Auto-routing from the Readiness Check** straight into a tailored playlist
   (currently it *recommends* a starting point; the child taps to proceed).
 
-### 19.5 Demonstrating accommodation in the research write-up
+### 19.6 Demonstrating accommodation in the research write-up
 To evidence that the software *accommodates Dyscalculia* (not just teaches
 maths), pair §19.2 with the engagement/motivation measures in §10.5: report (a)
 the foundational teaching features used, and (b) whether they coincide with

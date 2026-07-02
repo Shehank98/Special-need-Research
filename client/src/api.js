@@ -124,6 +124,8 @@ export const api = {
   teacherSetGroup: (payload) => request('/api/teacher/group', { method: 'POST', body: payload }),
   teacherReport: () => request('/api/teacher/report'),
   teacherReportCsvUrl: `${BASE}/api/teacher/report?format=csv`,
+  // Guardian progress tracking (read-only, by the child's login code).
+  guardianSummary: (code) => request(`/api/guardian/${encodeURIComponent(code)}`, { auth: false }),
 };
 
 export { BASE, getToken };

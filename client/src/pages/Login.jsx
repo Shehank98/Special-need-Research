@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import LanguageToggle from '../components/LanguageToggle.jsx';
@@ -153,6 +153,10 @@ export default function Login() {
             </button>
           )}
         </form>
+
+        <Link to="/guardian" className="text-center text-sm font-semibold text-slate-500 underline">
+          {lang === 'si' ? 'දෙමාපියෙක්ද? දරුවාගේ ප්‍රගතිය බලන්න' : 'A guardian? View your child’s progress'}
+        </Link>
       </div>
     </div>
   );

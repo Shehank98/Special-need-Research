@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import LanguageToggle from './LanguageToggle.jsx';
 import MoodCheckIn from './MoodCheckIn.jsx';
+import StudyBuddy from './math/StudyBuddy.jsx';
 
 // Page shell with a top bar (app name, language toggle, logout).
 export default function Layout({ children }) {
@@ -58,6 +59,8 @@ export default function Layout({ children }) {
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-4 py-6">{children}</main>
+      {/* Voice-based self-study assistant, for students only. */}
+      {user?.role === 'student' && <StudyBuddy />}
       {showMoodEnd && <MoodCheckIn phase="end" onPick={handleMoodEnd} />}
     </div>
   );

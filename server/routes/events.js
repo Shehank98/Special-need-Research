@@ -21,6 +21,7 @@ const VALID_EVENTS = [
   'level_select',
   'self_correction',
   'tracing_attempt',
+  'chatbot_used',
 ];
 
 // POST /api/events -> log an engagement event (silent background logging)

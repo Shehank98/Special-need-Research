@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Login from './pages/Login.jsx';
+import GuardianView from './pages/GuardianView.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
 import LessonPlayer from './pages/LessonPlayer.jsx';
 import Quiz from './pages/Quiz.jsx';
@@ -35,6 +36,8 @@ export default function App() {
           )
         }
       />
+      {/* Public guardian progress view (no login; child code only) */}
+      <Route path="/guardian" element={<GuardianView />} />
       {/* Grade 4 Maths is the student home */}
       <Route
         path="/home"
