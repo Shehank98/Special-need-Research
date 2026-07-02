@@ -24,11 +24,38 @@ export default function StudentDetail() {
   const [error, setError] = useState('');
   const [rating, setRating] = useState({ attention_1to5: 3, participation_1to5: 3, frustration_1to5: 2, notes: '' });
   const [saved, setSaved] = useState(false);
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   function load() {
     api.teacherStudent(id).then(setData).catch((e) => setError(e.message));
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
+
+  async function generateCode(hasCode) {
+    if (hasCode && !window.confirm(
+      lang === 'si'
+        ? 'නව කේතයක් සෑදුවහොත් පැරණි කේතය තවදුරටත් ක්‍රියා නොකරයි (දරුවාගේ පිවිසුම ද වෙනස් වේ). දිගටම කරන්නද?'
+        : 'Making a new code will stop the old one working (it is also the child’s login). Continue?'
+    )) return;
+    setCodeBusy(true);
+    try {
+      const res = await api.teacherSetCode({ student_id: id });
+      setData((d) => ({ ...d, student: { ...d.student, anon_code: res.anon_code } }));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setCodeBusy(false);
+    }
+  }
+
+  function copyCode(code) {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  }
 
   // Map activity -> { 1:score, 2:score, 3:score } for the level grid.
   const byActivity = useMemo(() => {
@@ -111,6 +138,37 @@ export default function StudentDetail() {
           <h1 className="text-3xl font-bold">🧒 {name}</h1>
           <p className="mt-1 text-sm opacity-90">
             {s.study_group ? `${s.study_group} · ` : ''}{s.difficulty_type || '—'}{s.grade ? ` · Grade ${s.grade}` : ''}{s.age ? ` · age ${s.age}` : ''}
+          </p>
+        </div>
+
+        {/* Child code — the code the student logs in with and a guardian enters at /guardian. */}
+        <div className="card space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-500">
+                🔑 {lang === 'si' ? 'දරුවාගේ කේතය (පිවිසුම හා දෙමාපිය ප්‍රවේශය)' : 'Child code (login & guardian access)'}
+              </p>
+              {s.anon_code ? (
+                <p className="text-2xl font-bold tracking-widest text-indigo-700">{s.anon_code}</p>
+              ) : (
+                <p className="text-slate-400">{lang === 'si' ? 'තවම කේතයක් නැත' : 'No code yet'}</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {s.anon_code && (
+                <button onClick={() => copyCode(s.anon_code)} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow">
+                  {copied ? '✓ ' + (lang === 'si' ? 'පිටපත් විය' : 'Copied') : '📋 ' + (lang === 'si' ? 'පිටපත්' : 'Copy')}
+                </button>
+              )}
+              <button onClick={() => generateCode(!!s.anon_code)} disabled={codeBusy} className="btn-primary px-4 py-2 text-sm disabled:opacity-50">
+                {codeBusy ? '…' : s.anon_code ? (lang === 'si' ? '🔄 නැවත සාදන්න' : '🔄 Regenerate') : (lang === 'si' ? '➕ කේතය සාදන්න' : '➕ Generate code')}
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-slate-400">
+            {lang === 'si'
+              ? 'දෙමාපියන්ට මෙම කේතය දී, පිවිසුම් තිරයේ "දෙමාපියෙක්ද?" හරහා ප්‍රගතිය බැලිය හැක.'
+              : 'Give this code to the guardian; they can view progress from the sign-in screen via “A guardian?”.'}
           </p>
         </div>
 

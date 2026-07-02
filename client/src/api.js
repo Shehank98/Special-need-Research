@@ -122,6 +122,8 @@ export const api = {
   teacherRate: (payload) => request('/api/teacher/rating', { method: 'POST', body: payload }),
   // Assign/move a student to a research group ("path"): 'intervention' | 'control' | null.
   teacherSetGroup: (payload) => request('/api/teacher/group', { method: 'POST', body: payload }),
+  // Assign or generate a student's login/guardian code. { student_id, code? }
+  teacherSetCode: (payload) => request('/api/teacher/code', { method: 'POST', body: payload }),
   teacherReport: () => request('/api/teacher/report'),
   teacherReportCsvUrl: `${BASE}/api/teacher/report?format=csv`,
   // Guardian progress tracking (read-only, by the child's login code).

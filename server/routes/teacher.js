@@ -285,6 +285,56 @@ router.post('/group', async (req, res) => {
   }
 });
 
+// Readable code alphabet: no 0/O/1/I/L to avoid confusion when read aloud or
+// written on paper for a guardian.
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+async function generateUniqueCode() {
+  for (let attempt = 0; attempt < 15; attempt++) {
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    }
+    const dup = await query('SELECT 1 FROM users WHERE anon_code = $1 LIMIT 1', [code]);
+    if (dup.rows.length === 0) return code;
+  }
+  return null;
+}
+
+// POST /api/teacher/code -> assign or generate the child's login/guardian code.
+// Body: { student_id, code? }. If `code` is omitted, a unique code is generated.
+// This is the code a guardian enters at /guardian and the student uses to log in.
+router.post('/code', async (req, res) => {
+  try {
+    const { student_id } = req.body || {};
+    if (!student_id) return res.status(400).json({ error: 'student_id required' });
+
+    const exists = await query("SELECT id FROM users WHERE id = $1 AND role = 'student'", [student_id]);
+    if (exists.rows.length === 0) return res.status(404).json({ error: 'Student not found' });
+
+    let code = (req.body.code || '').trim().toUpperCase();
+    if (code) {
+      if (!/^[A-Z0-9]{3,20}$/.test(code)) {
+        return res.status(400).json({ error: 'Code must be 3-20 letters or numbers' });
+      }
+      const dup = await query('SELECT id FROM users WHERE anon_code = $1 AND id <> $2 LIMIT 1', [code, student_id]);
+      if (dup.rows.length > 0) return res.status(409).json({ error: 'That code is already in use' });
+    } else {
+      code = await generateUniqueCode();
+      if (!code) return res.status(500).json({ error: 'Could not generate a unique code, please try again' });
+    }
+
+    const upd = await query(
+      "UPDATE users SET anon_code = $1 WHERE id = $2 AND role = 'student' RETURNING id, name, anon_code",
+      [code, student_id]
+    );
+    res.json({ student_id: upd.rows[0].id, anon_code: upd.rows[0].anon_code });
+  } catch (err) {
+    console.error('assign code error:', err.message);
+    res.status(500).json({ error: 'Failed to set code' });
+  }
+});
+
 // GET /api/teacher/student/:id -> full per-child detail (maths levels, engagement,
 // mood trend, badges, sessions, teacher ratings).
 router.get('/student/:id', async (req, res) => {
